@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FaultHub Admin — DB Breweries</title>
+<style>
+:root{--accent:#185FA5;--urgent:#A32D2D;--soon:#854F0B;--routine:#3B6D11;--bg:#f4f4f2;--card:#fff;--border:#e0dfd8;--text:#1a1a1a;--muted:#666;--r:10px;--rs:6px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);padding:1.5rem 1rem;}
+.wrap{max-width:1100px;margin:0 auto;}
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);}
+.hdr-left{display:flex;align-items:center;gap:14px;}
+.logo{width:40px;height:40px;border-radius:var(--rs);background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.ht{font-size:20px;font-weight:600;}.hs{font-size:12px;color:var(--muted);margin-top:2px;}
+.admin-badge{font-size:11px;background:#E6F1FB;color:#0C447C;padding:4px 10px;border-radius:var(--rs);font-weight:600;}
+.refresh-btn{font-size:13px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--rs);background:#fff;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;}
+.refresh-btn:hover{background:#f0efe9;}
+.refresh-icon{width:14px;height:14px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.25rem;}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;}
+.metric-label{font-size:12px;color:var(--muted);margin-bottom:4px;}
+.metric-val{font-size:24px;font-weight:600;}
+.metric-val.red{color:var(--urgent);}
+.metric-val.amber{color:var(--soon);}
+.metric-val.green{color:var(--routine);}
+.filters{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;}
+.filter-label{font-size:12px;color:var(--muted);}
+.filters select{font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--rs);background:#fff;font-family:inherit;}
+.jobs-list{display:flex;flex-direction:column;gap:8px;}
+.job-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;}
+.job-card.cancelled{opacity:0.5;}
+.job-card.complete{border-left:3px solid var(--routine);}
+.job-card.urgent-card{border-left:3px solid var(--urgent);}
+.job-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;}
+.job-ref{font-size:12px;color:var(--muted);font-weight:500;}
+.job-title{font-size:14px;font-weight:600;color:var(--text);margin-top:2px;}
+.job-vendor{font-size:13px;color:var(--muted);margin-top:2px;}
+.badges{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0;}
+.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:var(--rs);}
+.b-logged{background:#E6F1FB;color:#0C447C;}
+.b-sent{background:#EEEDFE;color:#3C3489;}
+.b-acknowledged{background:#EAF3DE;color:#27500A;}
+.b-inprogress{background:#FAEEDA;color:#633806;}
+.b-awaiting{background:#FAEEDA;color:#633806;}
+.b-complete{background:#EAF3DE;color:#27500A;}
+.b-cancelled{background:#F1EFE8;color:#444441;}
+.b-urgent{background:#FCEBEB;color:#791F1F;}
+.b-soon{background:#FAEEDA;color:#633806;}
+.b-routine{background:#EAF3DE;color:#27500A;}
+.job-desc{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5;padding:8px 10px;background:#f9f9f7;border-radius:var(--rs);}
+.job-note{font-size:12px;color:var(--muted);margin-top:6px;padding:6px 10px;background:#f0efe9;border-radius:var(--rs);border-left:2px solid var(--border);}
+.job-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap;align-items:center;}
+.act-select{font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--rs);background:#fff;font-family:inherit;cursor:pointer;}
+.act-btn{font-size:12px;padding:5px 12px;border:1px solid var(--border);border-radius:var(--rs);background:#fff;cursor:pointer;color:var(--text);font-family:inherit;}
+.act-btn:hover{background:#f0efe9;}
+.act-btn.danger{color:var(--urgent);border-color:#F09595;}
+.act-btn.danger:hover{background:#FCEBEB;}
+.note-area{margin-top:8px;display:none;}
+.note-area textarea{width:100%;font-size:13px;font-family:inherit;min-height:60px;resize:none;border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;}
+.note-save{font-size:12px;padding:5px 12px;margin-top:6px;border:1px solid var(--border);border-radius:var(--rs);background:#fff;cursor:pointer;font-family:inherit;}
+.note-save:hover{background:#f0efe9;}
+.empty{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:14px;}
+.loading{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:14px;}
+.form-link{font-size:13px;color:var(--accent);text-decoration:none;padding:7px 14px;border:1px solid var(--border);border-radius:var(--rs);background:#fff;}
+.form-link:hover{background:#E6F1FB;}
+@media(max-width:600px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr));}.job-top{flex-direction:column;}.badges{flex-direction:row;align-items:flex-start;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <div class="hdr-left">
+      <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+      <div><div class="ht">FaultHub</div><div class="hs">DB Breweries — Facilities</div></div>
+      <span class="admin-badge">Admin</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <a class="form-link" href="/index.html" target="_blank">View form</a>
+      <button class="refresh-btn" id="refreshBtn">
+        <svg class="refresh-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="metrics" id="metrics">
+    <div class="metric"><div class="metric-label">Open jobs</div><div class="metric-val" id="mOpen">—</div></div>
+    <div class="metric"><div class="metric-label">Urgent</div><div class="metric-val red" id="mUrgent">—</div></div>
+    <div class="metric"><div class="metric-label">Awaiting action</div><div class="metric-val amber" id="mAwaiting">—</div></div>
+    <div class="metric"><div class="metric-label">Complete</div><div class="metric-val green" id="mComplete">—</div></div>
+  </div>
+
+  <div class="filters">
+    <span class="filter-label">Filter:</span>
+    <select id="filterStatus" onchange="renderJobs()">
+      <option value="">All statuses</option>
+      <option>Logged</option><option>Sent to Vendor</option><option>Acknowledged</option>
+      <option>In Progress</option><option>Awaiting Review</option><option>Complete</option><option>Cancelled</option>
+    </select>
+    <select id="filterUrgency" onchange="renderJobs()">
+      <option value="">All urgency</option>
+      <option>Urgent</option><option>Soon</option><option>Routine</option>
+    </select>
+    <select id="filterCat" onchange="renderJobs()">
+      <option value="">All categories</option>
+    </select>
+  </div>
+
+  <div class="jobs-list" id="jobsList"><div class="loading">Loading jobs...</div></div>
+</div>
+
+<script>
+var SHEETS_URL="https://script.google.com/macros/s/AKfycbyzu9q7FU4F1kBvYn2Dzqff62-UvUqJDpT1U09DczFdtJkbDmO3KGEVO1gHTkh_Ov0p/exec";
+var jobs=[];
+var localStatus={};
+var localNotes={};
+
+function fmtDate(d){
+  if(!d)return"";
+  var dt=new Date(d);
+  if(isNaN(dt.getTime())){
+    // try parsing YYYY-MM-DD directly
+    var parts=String(d).split("T")[0].split("-");
+    if(parts.length===3){
+      var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      return parts[2]+" "+months[parseInt(parts[1])-1]+" "+parts[0];
+    }
+    return d;
+  }
+  var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return dt.getDate()+" "+months[dt.getMonth()]+" "+dt.getFullYear();
+}
+
+var statusClass={
+  "Logged":"b-logged","Sent to Vendor":"b-sent","Acknowledged":"b-acknowledged",
+  "In Progress":"b-inprogress","Awaiting Review":"b-awaiting","Complete":"b-complete","Cancelled":"b-cancelled"
+};
+var urgencyClass={"Urgent":"b-urgent","Soon":"b-soon","Routine":"b-routine"};
+var statuses=["Logged","Sent to Vendor","Acknowledged","In Progress","Awaiting Review","Complete","Cancelled"];
+
+function saveToSheet(ref,field,value){
+  var xhr=new XMLHttpRequest();
+  xhr.open("POST",SHEETS_URL);
+  xhr.setRequestHeader("Content-Type","text/plain");
+  xhr.send(JSON.stringify({action:"update",job_ref:ref,field:field,value:value}));
+}
+
+function loadJobs(){
+  document.getElementById("jobsList").innerHTML='<div class="loading">Loading jobs...</div>';
+  var xhr=new XMLHttpRequest();
+  xhr.open("GET",SHEETS_URL+"?action=getJobs");
+  xhr.onload=function(){
+    try{
+      var data=JSON.parse(xhr.responseText);
+      if(data.jobs){
+        jobs=data.jobs.reverse();
+        populateCatFilter();
+        renderJobs();
+      } else {
+        document.getElementById("jobsList").innerHTML='<div class="empty">No jobs found in the sheet yet.</div>';
+      }
+    } catch(e){
+      console.error("Parse error:",e);
+      document.getElementById("jobsList").innerHTML='<div class="empty">Could not load jobs. Check your Apps Script deployment.</div>';
+    }
+  };
+  xhr.onerror=function(){
+    document.getElementById("jobsList").innerHTML='<div class="empty">Connection error — could not reach Google Sheets.</div>';
+  };
+  xhr.send();
+}
+
+function populateCatFilter(){
+  var sel=document.getElementById("filterCat");
+  var current=sel.value;
+  sel.innerHTML='<option value="">All categories</option>';
+  var cats=[...new Set(jobs.map(function(j){return j.category;}))].filter(Boolean).sort();
+  cats.forEach(function(c){var o=document.createElement("option");o.value=c;o.textContent=c;sel.appendChild(o);});
+  sel.value=current;
+}
+
+function getStatus(job){return localStatus[job.job_ref]||job.status||"Logged";}
+function getNote(job){return localNotes[job.job_ref]!==undefined?localNotes[job.job_ref]:(job.note||"");}
+
+function updateMetrics(filtered_all){
+  var open=filtered_all.filter(function(j){var s=getStatus(j);return s!=="Complete"&&s!=="Cancelled";}).length;
+  var urgent=filtered_all.filter(function(j){var s=getStatus(j);return j.urgency==="Urgent"&&s!=="Complete"&&s!=="Cancelled";}).length;
+  var awaiting=filtered_all.filter(function(j){var s=getStatus(j);return s==="Acknowledged"||s==="Awaiting Review"||s==="Logged"||s==="Sent to Vendor";}).length;
+  var complete=filtered_all.filter(function(j){return getStatus(j)==="Complete";}).length;
+  document.getElementById("mOpen").textContent=open;
+  document.getElementById("mUrgent").textContent=urgent;
+  document.getElementById("mAwaiting").textContent=awaiting;
+  document.getElementById("mComplete").textContent=complete;
+}
+
+function renderJobs(){
+  var fs=document.getElementById("filterStatus").value;
+  var fu=document.getElementById("filterUrgency").value;
+  var fc=document.getElementById("filterCat").value;
+  updateMetrics(jobs);
+  var filtered=jobs.filter(function(j){
+    if(fs&&getStatus(j)!==fs)return false;
+    if(fu&&j.urgency!==fu)return false;
+    if(fc&&j.category!==fc)return false;
+    return true;
+  });
+  filtered.sort(function(a,b){
+    var up={"Urgent":0,"Soon":1,"Routine":2};
+    var sa=getStatus(a);var sb=getStatus(b);
+    if(sa==="Complete"&&sb!=="Complete")return 1;
+    if(sb==="Complete"&&sa!=="Complete")return -1;
+    if(sa==="Cancelled"&&sb!=="Cancelled")return 1;
+    if(sb==="Cancelled"&&sa!=="Cancelled")return -1;
+    return(up[a.urgency]||0)-(up[b.urgency]||0);
+  });
+  if(!filtered.length){
+    document.getElementById("jobsList").innerHTML='<div class="empty">No jobs match the current filters.</div>';
+    return;
+  }
+  var html=filtered.map(function(j){
+    var status=getStatus(j);
+    var note=getNote(j);
+    var sc=statusClass[status]||"b-logged";
+    var uc=urgencyClass[j.urgency]||"b-routine";
+    var cardClass="job-card"+(status==="Cancelled"?" cancelled":"")+(status==="Complete"?" complete":"")+(j.urgency==="Urgent"&&status!=="Complete"&&status!=="Cancelled"?" urgent-card":"");
+    var showCancel=status!=="Cancelled"&&status!=="Complete";
+    return '<div class="'+cardClass+'" id="card-'+j.job_ref+'">'
+      +'<div class="job-top"><div>'
+      +'<div class="job-ref">'+j.job_ref+' &middot; '+fmtDate(j.date)+' &middot; '+j.site+'</div>'
+      +'<div class="job-title">'+j.category+' — '+j.description.substring(0,80)+(j.description.length>80?"…":"")+'</div>'
+      +'<div class="job-vendor">Vendor: '+j.vendor+' &middot; Logged by: '+j.reporter+(j.phone&&j.phone!=="Not provided"?' ('+j.phone+')':'')+'</div>'
+      +'</div><div class="badges"><span class="badge '+uc+'">'+j.urgency+'</span><span class="badge '+sc+'">'+status+'</span></div></div>'
+      +(note?'<div class="job-note">Note: '+note+'</div>':'')
+      +'<div class="job-desc">'+j.description+'</div>'
+      +'<div class="job-actions">'
+      +'<select class="act-select" onchange="changeStatus(\''+j.job_ref+'\',this.value)"'+(status==="Cancelled"?" disabled":"")+'>'+statuses.map(function(s){return'<option value="'+s+'"'+(status===s?" selected":"")+'>'+s+'</option>';}).join("")+'</select>'
+      +'<button class="act-btn" onclick="toggleNote(\''+j.job_ref+'\')"'+(status==="Cancelled"?" disabled":"")+'>+ Note</button>'
+      +(showCancel?'<button class="act-btn danger" onclick="cancelJob(\''+j.job_ref+'\')">Cancel job</button>':'')
+      +'</div>'
+      +'<div class="note-area" id="note-'+j.job_ref+'">'
+      +'<textarea id="noteinput-'+j.job_ref+'" placeholder="Add a note or update…"></textarea>'
+      +'<button class="note-save" onclick="saveNote(\''+j.job_ref+'\')">Save note</button>'
+      +'</div></div>';
+  }).join("");
+  document.getElementById("jobsList").innerHTML=html;
+}
+
+function changeStatus(ref,val){
+  localStatus[ref]=val;
+  renderJobs();
+  saveToSheet(ref,"status",val);
+}
+
+function toggleNote(ref){
+  var el=document.getElementById("note-"+ref);
+  el.style.display=el.style.display==="block"?"none":"block";
+}
+
+function saveNote(ref){
+  var val=document.getElementById("noteinput-"+ref).value.trim();
+  if(val){
+    localNotes[ref]=val;
+    renderJobs();
+    saveToSheet(ref,"note",val);
+  }
+}
+
+function cancelJob(ref){
+  if(confirm("Cancel job "+ref+"? This cannot be undone.")){
+    localStatus[ref]="Cancelled";
+    renderJobs();
+    saveToSheet(ref,"status","Cancelled");
+  }
+}
+
+document.getElementById("refreshBtn").onclick=function(){loadJobs();};
+
+loadJobs();
+</script>
+</body>
+</html>

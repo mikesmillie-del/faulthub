@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FaultHub — DB Breweries Facilities</title>
+<style>
+:root{--accent:#185FA5;--urgent:#A32D2D;--soon:#854F0B;--routine:#3B6D11;--bg:#f4f4f2;--card:#fff;--border:#e0dfd8;--text:#1a1a1a;--muted:#666;--r:10px;--rs:6px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);padding:2rem 1rem;}
+.wrap{max-width:660px;margin:0 auto;}
+.hdr{display:flex;align-items:center;gap:14px;margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);}
+.logo{width:44px;height:44px;border-radius:var(--rs);background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.ht{font-size:22px;font-weight:600;}.hs{font-size:13px;color:var(--muted);margin-top:2px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem;margin-bottom:1rem;}
+.slabel{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.full{grid-column:1/-1;}
+.lbl{font-size:13px;color:var(--muted);font-weight:500;}
+.req{color:var(--urgent);}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--text);border:1px solid var(--border);border-radius:var(--rs);padding:9px 12px;background:#fff;width:100%;transition:border-color .15s;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);}
+textarea{min-height:90px;resize:vertical;}
+.ugroup{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.ubtn{position:relative;cursor:pointer;}
+.ubtn input[type=radio]{position:absolute;opacity:0;width:0;height:0;}
+.ucard{border:1px solid var(--border);border-radius:var(--rs);padding:12px 10px;text-align:center;transition:border-color .15s,background .15s;cursor:pointer;background:#fff;}
+.ubtn input:checked~.ucard.u{border-color:var(--urgent);background:#FCEBEB;}
+.ubtn input:checked~.ucard.s{border-color:var(--soon);background:#FAEEDA;}
+.ubtn input:checked~.ucard.r{border-color:var(--routine);background:#EAF3DE;}
+.udot{width:10px;height:10px;border-radius:50%;margin:0 auto 6px;}
+.udot.u{background:var(--urgent);}.udot.s{background:var(--soon);}.udot.r{background:var(--routine);}
+.uname{font-size:13px;font-weight:600;color:var(--text);}
+.udesc{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4;}
+.vhide{display:none;flex-direction:column;gap:5px;}
+.vpend{font-size:13px;color:var(--muted);font-style:italic;padding:9px 12px;border:1px solid var(--border);border-radius:var(--rs);background:#f9f9f7;}
+.pzone{border:1px dashed var(--border);border-radius:var(--rs);padding:1.5rem;text-align:center;cursor:pointer;background:#f9f9f7;}
+.pzone:hover{border-color:var(--accent);background:#E6F1FB;}
+.ptxt{font-size:13px;color:var(--muted);}
+.ptxt span{color:var(--accent);font-weight:500;}
+#photoInput{display:none;}
+#photoPreview{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.thumb{width:60px;height:60px;border-radius:var(--rs);object-fit:cover;border:1px solid var(--border);}
+.sbtn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:.5rem;transition:opacity .15s;}
+.sbtn:hover{opacity:.88;}
+.success{display:none;text-align:center;padding:3rem 1rem;}
+.sicon{width:60px;height:60px;border-radius:50%;background:#EAF3DE;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;}
+.sicon svg{width:30px;height:30px;fill:none;stroke:#3B6D11;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.stitle{font-size:22px;font-weight:600;margin-bottom:8px;}
+.smsg{font-size:14px;color:var(--muted);line-height:1.6;max-width:360px;margin:0 auto 1rem;}
+.sdetail{background:#f9f9f7;border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;max-width:360px;margin:0 auto 1.5rem;text-align:left;}
+.srow{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border);}
+.srow:last-child{border-bottom:none;}
+.sl{color:var(--muted);}.sv{font-weight:600;}
+.nbtn{background:transparent;border:1px solid var(--border);border-radius:var(--rs);padding:10px 24px;font-size:14px;cursor:pointer;font-family:inherit;}
+.nbtn:hover{background:#eeede8;}
+@media(max-width:480px){.grid{grid-template-columns:1fr;}.ugroup{grid-template-columns:1fr;}body{padding:1rem .75rem;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="frmScreen">
+    <div class="hdr">
+      <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+      <div><div class="ht">FaultHub</div><div class="hs">DB Breweries — Facilities</div></div>
+    </div>
+
+    <div class="card">
+      <div class="slabel">Site details</div>
+      <div class="grid">
+        <div class="field"><label class="lbl">Site / location <span class="req">*</span></label><input type="text" id="site" placeholder="e.g. DB Breweries Papatoetoe" /></div>
+        <div class="field"><label class="lbl">Your name <span class="req">*</span></label><input type="text" id="reporter" placeholder="Full name" /></div>
+        <div class="field"><label class="lbl">Contact number</label><input type="tel" id="phone" placeholder="Phone or extension" /></div>
+        <div class="field"><label class="lbl">Date <span class="req">*</span></label><input type="date" id="jobDate" /></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="slabel">Job details</div>
+      <div class="grid">
+        <div class="field full">
+          <label class="lbl">Category <span class="req">*</span></label>
+          <select id="category">
+            <option value="">— Select category —</option>
+            <option>Refrigeration</option><option>Electrical</option><option>Plumbing</option>
+            <option>Equipment Repair</option><option>Building Repairs</option><option>Pests</option>
+            <option>Grounds</option><option>Security</option><option>Fire Protection</option>
+            <option>Cleaning</option><option>HVAC</option><option>Lifts</option><option>Doors</option><option>Other</option>
+          </select>
+        </div>
+        <div class="vhide full" id="vendorField">
+          <label class="lbl">Assign to vendor <span class="req">*</span></label>
+          <select id="vendor"><option value="">— Select vendor —</option></select>
+        </div>
+        <div class="field full" id="vendorPend" style="display:none;">
+          <label class="lbl">Assign to vendor</label>
+          <div class="vpend">No vendors assigned yet — contact Facilities Manager</div>
+        </div>
+        <div class="field full"><label class="lbl">Description <span class="req">*</span></label><textarea id="desc" placeholder="Describe the fault — include location within site, what you have noticed, and when it started."></textarea></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="slabel">Urgency <span class="req">*</span></div>
+      <div class="ugroup">
+        <label class="ubtn"><input type="radio" name="urg" value="Urgent"><div class="ucard u"><div class="udot u"></div><div class="uname">Urgent</div><div class="udesc">Business impacted now</div></div></label>
+        <label class="ubtn"><input type="radio" name="urg" value="Soon"><div class="ucard s"><div class="udot s"></div><div class="uname">Soon</div><div class="udesc">Needs fixing this week</div></div></label>
+        <label class="ubtn"><input type="radio" name="urg" value="Routine"><div class="ucard r"><div class="udot r"></div><div class="uname">Routine</div><div class="udesc">Next available</div></div></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="slabel">Photo (optional)</div>
+      <div class="pzone" id="pzone">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5" style="margin:0 auto 8px;display:block;"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3"/><path d="M8 7V5a1 1 0 011-1h6a1 1 0 011 1v2"/></svg>
+        <div class="ptxt"><span>Tap to upload</span> or drag a photo here</div>
+        <div class="ptxt" style="margin-top:4px;font-size:11px;">JPG or PNG</div>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" multiple>
+      <div id="photoPreview"></div>
+    </div>
+
+    <button class="sbtn" id="submitBtn" type="button">Submit fault report</button>
+  </div>
+
+  <div class="success" id="successScreen">
+    <div class="sicon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <div class="stitle">Fault logged</div>
+    <div class="smsg">Your report has been submitted and the vendor will be notified.</div>
+    <div class="sdetail">
+      <div class="srow"><span class="sl">Job ref</span><span class="sv" id="oRef"></span></div>
+      <div class="srow"><span class="sl">Category</span><span class="sv" id="oCat"></span></div>
+      <div class="srow"><span class="sl">Vendor</span><span class="sv" id="oVen"></span></div>
+      <div class="srow"><span class="sl">Urgency</span><span class="sv" id="oUrg"></span></div>
+    </div>
+    <button class="nbtn" id="newBtn" type="button">Log another fault</button>
+  </div>
+</div>
+
+<script type="text/javascript">
+var vendors={
+  "Refrigeration":["Econair","1st Maintenance"],
+  "Electrical":["Dalton Electrical"],
+  "Plumbing":["Plumbcraft"],
+  "Equipment Repair":[],
+  "Building Repairs":["GJ Construction","CML","Waterproofing Solutions"],
+  "Pests":["Rentokil"],
+  "Grounds":["PAE","Treesafe"],
+  "Security":["Security Concepts","ISS","Armourguard"],
+  "Fire Protection":["Wormald"],
+  "Cleaning":["CMOS","Initial"],
+  "HVAC":["Econair","1st Maintenance","Direct Controls"],
+  "Lifts":["Otis"],
+  "Doors":["Elite","Ulti-Group","GCOM"],
+  "Other":[]
+};
+
+document.getElementById("jobDate").value=new Date().toISOString().split("T")[0];
+
+document.getElementById("category").onchange=function(){
+  var cat=this.value;
+  var vf=document.getElementById("vendorField");
+  var vpf=document.getElementById("vendorPend");
+  var vs=document.getElementById("vendor");
+  vf.style.display="none";
+  vpf.style.display="none";
+  if(!cat)return;
+  var list=vendors[cat]||[];
+  if(list.length===0){vpf.style.display="flex";return;}
+  vs.innerHTML='<option value="">— Select vendor —</option>';
+  for(var i=0;i<list.length;i++){
+    var o=document.createElement("option");
+    o.value=list[i];o.textContent=list[i];vs.appendChild(o);
+  }
+  vf.style.display="flex";
+};
+
+document.getElementById("pzone").onclick=function(){
+  document.getElementById("photoInput").click();
+};
+
+document.getElementById("photoInput").onchange=function(){
+  var prev=document.getElementById("photoPreview");
+  prev.innerHTML="";
+  for(var i=0;i<this.files.length;i++){
+    var img=document.createElement("img");
+    img.className="thumb";
+    img.src=URL.createObjectURL(this.files[i]);
+    prev.appendChild(img);
+  }
+};
+
+document.getElementById("submitBtn").onclick=function(){
+  var site=document.getElementById("site").value.trim();
+  var rep=document.getElementById("reporter").value.trim();
+  var cat=document.getElementById("category").value;
+  var desc=document.getElementById("desc").value.trim();
+  var urg=document.querySelector("input[name=urg]:checked");
+  var vf=document.getElementById("vendorField");
+  var vs=document.getElementById("vendor");
+
+  if(!site||!rep||!cat||!desc||!urg){
+    alert("Please fill in all required fields and select an urgency level.");return;
+  }
+  if(vf.style.display!=="none"&&!vs.value){
+    alert("Please select a vendor for this category.");return;
+  }
+
+  var vendor=vf.style.display!=="none"?vs.value:"To be assigned";
+  var ref="FH-"+new Date().getFullYear()+"-"+(Math.floor(Math.random()*9000)+1000);
+  var phone=document.getElementById("phone").value.trim()||"Not provided";
+  var date=document.getElementById("jobDate").value;
+
+  var SHEETS_URL="https://script.google.com/macros/s/AKfycbxEo3v2ulzXrmTRPMk4bFLUNUmhFVyBJ2TfBhPF8I4qViBePYBCVOB3Nmb9RgazBjKl/exec";
+  var EMAILJS_PUBLIC_KEY="GY4e_uE9KvDgmxFOJ";
+  var EMAILJS_SERVICE="service_bj44lwp";
+  var EMAILJS_TEMPLATE="template_hy3yy0a";
+
+  var btn=document.getElementById("submitBtn");
+  btn.disabled=true;btn.textContent="Sending...";
+
+  var jobData={
+    job_ref:ref,date:date,site:site,reporter:rep,
+    phone:phone,category:cat,vendor:vendor,
+    urgency:urg.value,description:desc
+  };
+
+  var emailSent=false;var sheetSaved=false;
+  var emailError=false;var sheetError=false;
+
+  function checkDone(){
+    if((emailSent||emailError)&&(sheetSaved||sheetError)){
+      if(emailSent||sheetSaved){
+        document.getElementById("oRef").textContent=ref;
+        document.getElementById("oCat").textContent=cat;
+        document.getElementById("oVen").textContent=vendor;
+        document.getElementById("oUrg").textContent=urg.value;
+        document.getElementById("frmScreen").style.display="none";
+        document.getElementById("successScreen").style.display="block";
+      } else {
+        btn.disabled=false;btn.textContent="Submit fault report";
+        alert("Something went wrong. Please try again.");
+      }
+    }
+  }
+
+  var xhr=new XMLHttpRequest();
+  xhr.open("POST","https://api.emailjs.com/api/v1.0/email/send");
+  xhr.setRequestHeader("Content-Type","application/json");
+  xhr.onload=function(){
+    if(xhr.status===200){emailSent=true;}
+    else{console.error("EmailJS error:",xhr.responseText);emailError=true;}
+    checkDone();
+  };
+  xhr.onerror=function(){emailError=true;checkDone();};
+  xhr.send(JSON.stringify({
+    service_id:EMAILJS_SERVICE,
+    template_id:EMAILJS_TEMPLATE,
+    user_id:EMAILJS_PUBLIC_KEY,
+    template_params:jobData
+  }));
+
+  var xhr2=new XMLHttpRequest();
+  xhr2.open("POST",SHEETS_URL);
+  xhr2.setRequestHeader("Content-Type","text/plain");
+  xhr2.onload=function(){sheetSaved=true;checkDone();};
+  xhr2.onerror=function(){console.error("Sheets error");sheetError=true;checkDone();};
+  xhr2.send(JSON.stringify(jobData));
+};
+
+document.getElementById("newBtn").onclick=function(){
+  document.getElementById("frmScreen").style.display="block";
+  document.getElementById("successScreen").style.display="none";
+  ["site","reporter","phone","desc"].forEach(function(id){document.getElementById(id).value="";});
+  document.getElementById("category").value="";
+  document.getElementById("photoPreview").innerHTML="";
+  document.getElementById("vendorField").style.display="none";
+  document.getElementById("vendorPend").style.display="none";
+  document.querySelectorAll("input[name=urg]").forEach(function(r){r.checked=false;});
+  document.getElementById("submitBtn").disabled=false;
+  document.getElementById("submitBtn").textContent="Submit fault report";
+  document.getElementById("jobDate").value=new Date().toISOString().split("T")[0];
+};
+</script>
+</body>
+</html>
