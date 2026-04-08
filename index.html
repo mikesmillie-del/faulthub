@@ -213,7 +213,7 @@ document.getElementById("submitBtn").onclick=function(){
   var phone=document.getElementById("phone").value.trim()||"Not provided";
   var date=document.getElementById("jobDate").value;
 
-  var SHEETS_URL="https://script.google.com/macros/s/AKfycbxEo3v2ulzXrmTRPMk4bFLUNUmhFVyBJ2TfBhPF8I4qViBePYBCVOB3Nmb9RgazBjKl/exec";
+  var SHEETS_URL="https://script.google.com/macros/s/AKfycbyzu9q7FU4F1kBvYn2Dzqff62-UvUqJDpT1U09DczFdtJkbDmO3KGEVO1gHTkh_Ov0p/exec";
   var EMAILJS_PUBLIC_KEY="GY4e_uE9KvDgmxFOJ";
   var EMAILJS_SERVICE="service_bj44lwp";
   var EMAILJS_TEMPLATE="template_hy3yy0a";
@@ -262,12 +262,12 @@ document.getElementById("submitBtn").onclick=function(){
     template_params:jobData
   }));
 
-  var xhr2=new XMLHttpRequest();
-  xhr2.open("POST",SHEETS_URL);
-  xhr2.setRequestHeader("Content-Type","text/plain");
-  xhr2.onload=function(){sheetSaved=true;checkDone();};
-  xhr2.onerror=function(){console.error("Sheets error");sheetError=true;checkDone();};
-  xhr2.send(JSON.stringify(jobData));
+  fetch(SHEETS_URL, {
+    method:"POST",
+    mode:"no-cors",
+    body:JSON.stringify(jobData)
+  }).then(function(){sheetSaved=true;checkDone();})
+    .catch(function(e){console.error("Sheets error",e);sheetError=true;checkDone();});
 };
 
 document.getElementById("newBtn").onclick=function(){
