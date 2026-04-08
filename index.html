@@ -305,58 +305,87 @@ document.getElementById("submitBtn").onclick=function(){
   var btn=document.getElementById("submitBtn");
   btn.disabled=true;btn.textContent="Sending...";
 
-  var vendorEmail="";
-  if(vf.style.display!=="none"&&vs.selectedIndex>0){
-    vendorEmail=vs.options[vs.selectedIndex].getAttribute("data-email")||"";
-  }
-  var jobData={
-    job_ref:ref,date:date,site:site,reporter:rep,
-    phone:phone,category:cat,vendor:vendor,
-    urgency:urg.value,description:desc,
-    vendor_email:vendorEmail
-  };
+  function sendJob(photoUrl){
+    var jobData={
+      job_ref:ref,date:date,site:site,reporter:rep,
+      phone:phone,category:cat,vendor:vendor,
+      urgency:urg.value,description:desc,
+      vendor_email:vendorEmail,
+      photo_url:photoUrl||""
+    };
 
-  var emailSent=false;var sheetSaved=false;
-  var emailError=false;var sheetError=false;
+    var emailSent=false;var sheetSaved=false;
+    var emailError=false;var sheetError=false;
 
-  function checkDone(){
-    if((emailSent||emailError)&&(sheetSaved||sheetError)){
-      if(emailSent||sheetSaved){
-        document.getElementById("oRef").textContent=ref;
-        document.getElementById("oCat").textContent=cat;
-        document.getElementById("oVen").textContent=vendor;
-        document.getElementById("oUrg").textContent=urg.value;
-        document.getElementById("frmScreen").style.display="none";
-        document.getElementById("successScreen").style.display="block";
-      } else {
-        btn.disabled=false;btn.textContent="Submit fault report";
-        alert("Something went wrong. Please try again.");
+    function checkDone(){
+      if((emailSent||emailError)&&(sheetSaved||sheetError)){
+        if(emailSent||sheetSaved){
+          document.getElementById("oRef").textContent=ref;
+          document.getElementById("oCat").textContent=cat;
+          document.getElementById("oVen").textContent=vendor;
+          document.getElementById("oUrg").textContent=urg.value;
+          document.getElementById("frmScreen").style.display="none";
+          document.getElementById("successScreen").style.display="block";
+        } else {
+          btn.disabled=false;btn.textContent="Submit fault report";
+          alert("Something went wrong. Please try again.");
+        }
       }
     }
+
+    var xhr=new XMLHttpRequest();
+    xhr.open("POST","https://api.emailjs.com/api/v1.0/email/send");
+    xhr.setRequestHeader("Content-Type","application/json");
+    xhr.onload=function(){
+      if(xhr.status===200){emailSent=true;}
+      else{console.error("EmailJS error:",xhr.responseText);emailError=true;}
+      checkDone();
+    };
+    xhr.onerror=function(){emailError=true;checkDone();};
+    xhr.send(JSON.stringify({
+      service_id:EMAILJS_SERVICE,
+      template_id:EMAILJS_TEMPLATE,
+      user_id:EMAILJS_PUBLIC_KEY,
+      template_params:{
+        job_ref:ref,date:date,site:site,reporter:rep,
+        phone:phone,category:cat,vendor:vendor,
+        urgency:urg.value,description:desc,
+        to_email:vendorEmail||"mike.smillie@db.co.nz",
+        photo_link:photoUrl?"Photo attached: "+photoUrl:"No photo attached"
+      }
+    }));
+
+    fetch(SHEETS_URL,{
+      method:"POST",
+      mode:"no-cors",
+      body:JSON.stringify(jobData)
+    }).then(function(){sheetSaved=true;checkDone();})
+      .catch(function(e){console.error("Sheets error",e);sheetError=true;checkDone();});
   }
 
-  var xhr=new XMLHttpRequest();
-  xhr.open("POST","https://api.emailjs.com/api/v1.0/email/send");
-  xhr.setRequestHeader("Content-Type","application/json");
-  xhr.onload=function(){
-    if(xhr.status===200){emailSent=true;}
-    else{console.error("EmailJS error:",xhr.responseText);emailError=true;}
-    checkDone();
-  };
-  xhr.onerror=function(){emailError=true;checkDone();};
-  xhr.send(JSON.stringify({
-    service_id:EMAILJS_SERVICE,
-    template_id:EMAILJS_TEMPLATE,
-    user_id:EMAILJS_PUBLIC_KEY,
-    template_params:Object.assign({},jobData,{to_email:jobData.vendor_email||"mike.smillie@db.co.nz"})
-  }));
-
-  fetch(SHEETS_URL, {
-    method:"POST",
-    mode:"no-cors",
-    body:JSON.stringify(jobData)
-  }).then(function(){sheetSaved=true;checkDone();})
-    .catch(function(e){console.error("Sheets error",e);sheetError=true;checkDone();});
+  var photoInput=document.getElementById("photoInput");
+  if(photoInput.files&&photoInput.files.length>0){
+    var file=photoInput.files[0];
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var base64=ev.target.result;
+      fetch(SHEETS_URL,{
+        method:"POST",
+        headers:{"Content-Type":"text/plain"},
+        body:JSON.stringify({
+          action:"photo",
+          image:base64,
+          mimeType:file.type,
+          filename:ref+"_"+file.name
+        })
+      }).then(function(r){return r.json();})
+        .then(function(d){sendJob(d.url||"");})
+        .catch(function(){sendJob("");});
+    };
+    reader.readAsDataURL(file);
+  } else {
+    sendJob("");
+  }
 };
 
 document.getElementById("newBtn").onclick=function(){

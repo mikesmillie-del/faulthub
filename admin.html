@@ -254,6 +254,7 @@ function renderJobs(){
       +'</div><div class="badges"><span class="badge '+uc+'">'+j.urgency+'</span><span class="badge '+sc+'">'+status+'</span></div></div>'
       +(note?'<div class="job-note">Note: '+note+'</div>':'')
       +'<div class="job-desc">'+j.description+'</div>'
+      +(j.photo_url?'<div style="margin-top:6px;"><a href="'+j.photo_url+'" target="_blank" style="font-size:12px;color:#185FA5;">View photo</a></div>':'')
       +'<div class="job-actions">'
       +'<select class="act-select" onchange="changeStatus(\''+j.job_ref+'\',this.value)"'+(status==="Cancelled"?" disabled":"")+'>'+statuses.map(function(s){return'<option value="'+s+'"'+(status===s?" selected":"")+'>'+s+'</option>';}).join("")+'</select>'
       +'<button class="act-btn" onclick="toggleNote(\''+j.job_ref+'\')"'+(status==="Cancelled"?" disabled":"")+'>+ Note</button>'
