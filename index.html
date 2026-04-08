@@ -57,9 +57,34 @@ textarea{min-height:90px;resize:vertical;}
 .nbtn{background:transparent;border:1px solid var(--border);border-radius:var(--rs);padding:10px 24px;font-size:14px;cursor:pointer;font-family:inherit;}
 .nbtn:hover{background:#eeede8;}
 @media(max-width:480px){.grid{grid-template-columns:1fr;}.ugroup{grid-template-columns:1fr;}body{padding:1rem .75rem;}}
+
+.login-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:2.5rem 2rem;width:100%;max-width:360px;text-align:center;}
+.login-logo{width:52px;height:52px;border-radius:var(--rs);background:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;}
+.login-logo svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.login-title{font-size:20px;font-weight:600;margin-bottom:4px;}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:1.5rem;}
+.login-field{display:flex;flex-direction:column;gap:6px;margin-bottom:1rem;text-align:left;}
+.login-field label{font-size:13px;color:var(--muted);font-weight:500;}
+.login-err{font-size:13px;color:var(--urgent);margin-bottom:10px;display:none;}
+.login-btn{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+.login-btn:hover{opacity:.88;}
 </style>
 </head>
 <body>
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+    <div class="login-title">FaultHub</div>
+    <div class="login-sub">DB Breweries — Facilities</div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkLogin()" />
+    </div>
+    <div class="login-err" id="loginErr">Incorrect password. Please try again.</div>
+    <button class="login-btn" onclick="checkLogin()">Sign in</button>
+  </div>
+</div>
 <div class="wrap">
   <div id="frmScreen">
     <div class="hdr">
@@ -179,7 +204,7 @@ var vendors={
     {name:"CML",email:"jay@cml.co.nz"}
   ],
   "Security":[
-    {name:"Security Concepts",email:"tim@securityconcepts.co.nz"},
+    {name:"Security Concepts",email:"info@securityconcepts.co.nz"},
     {name:"ISS Security",email:"service@issltd.co.nz"},
     {name:"Armourguard",email:"atenai.talo@armourguard.co.nz"}
   ],
@@ -347,6 +372,24 @@ document.getElementById("newBtn").onclick=function(){
   document.getElementById("submitBtn").textContent="Submit fault report";
   document.getElementById("jobDate").value=new Date().toISOString().split("T")[0];
 };
+
+var PASS="DBadmin2026";
+function checkLogin(){
+  var val=document.getElementById("loginPass").value;
+  if(val===PASS){
+    document.getElementById("loginScreen").style.display="none";
+    sessionStorage.setItem("fh_auth","1");
+  } else {
+    document.getElementById("loginErr").style.display="block";
+    document.getElementById("loginPass").value="";
+  }
+}
+if(sessionStorage.getItem("fh_auth")!=="1"){
+  document.getElementById("loginScreen").style.display="flex";
+} else {
+  document.getElementById("loginScreen").style.display="none";
+}
+
 </script>
 </body>
 </html>

@@ -66,9 +66,34 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .form-link{font-size:13px;color:var(--accent);text-decoration:none;padding:7px 14px;border:1px solid var(--border);border-radius:var(--rs);background:#fff;}
 .form-link:hover{background:#E6F1FB;}
 @media(max-width:600px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr));}.job-top{flex-direction:column;}.badges{flex-direction:row;align-items:flex-start;}}
+
+.login-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:2.5rem 2rem;width:100%;max-width:360px;text-align:center;}
+.login-logo{width:52px;height:52px;border-radius:var(--rs);background:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;}
+.login-logo svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.login-title{font-size:20px;font-weight:600;margin-bottom:4px;}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:1.5rem;}
+.login-field{display:flex;flex-direction:column;gap:6px;margin-bottom:1rem;text-align:left;}
+.login-field label{font-size:13px;color:var(--muted);font-weight:500;}
+.login-err{font-size:13px;color:var(--urgent);margin-bottom:10px;display:none;}
+.login-btn{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+.login-btn:hover{opacity:.88;}
 </style>
 </head>
 <body>
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+    <div class="login-title">FaultHub</div>
+    <div class="login-sub">DB Breweries — Facilities</div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkLogin()" />
+    </div>
+    <div class="login-err" id="loginErr">Incorrect password. Please try again.</div>
+    <button class="login-btn" onclick="checkLogin()">Sign in</button>
+  </div>
+</div>
 <div class="wrap">
   <div class="hdr">
     <div class="hdr-left">
@@ -270,9 +295,28 @@ function cancelJob(ref){
   }
 }
 
-document.getElementById("refreshBtn").onclick=function(){loadJobs();};
+document.getElementById("refreshBtn").onclick=function(){if(sessionStorage.getItem("fh_auth")==="1")loadJobs();};
 
-loadJobs();
+
+var PASS="DBadmin2026";
+function checkLogin(){
+  var val=document.getElementById("loginPass").value;
+  if(val===PASS){
+    document.getElementById("loginScreen").style.display="none";
+    sessionStorage.setItem("fh_auth","1");
+    loadJobs();
+  } else {
+    document.getElementById("loginErr").style.display="block";
+    document.getElementById("loginPass").value="";
+  }
+}
+if(sessionStorage.getItem("fh_auth")!=="1"){
+  document.getElementById("loginScreen").style.display="flex";
+} else {
+  document.getElementById("loginScreen").style.display="none";
+  loadJobs();
+}
+
 </script>
 </body>
 </html>
