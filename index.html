@@ -225,7 +225,7 @@ document.getElementById("category").onchange=function(){
   vs.innerHTML='<option value="">— Select vendor —</option>';
   for(var i=0;i<list.length;i++){
     var o=document.createElement("option");
-    o.value=list[i];o.textContent=list[i];vs.appendChild(o);
+    o.value=list[i].name;o.textContent=list[i].name;o.setAttribute("data-email",list[i].email||"");vs.appendChild(o);
   }
   vf.style.display="flex";
 };
