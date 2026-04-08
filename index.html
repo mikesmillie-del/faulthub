@@ -142,20 +142,72 @@ textarea{min-height:90px;resize:vertical;}
 
 <script type="text/javascript">
 var vendors={
-  "Refrigeration":["Econair","1st Maintenance"],
-  "Electrical":["Dalton Electrical"],
-  "Plumbing":["Plumbcraft"],
-  "Equipment Repair":[],
-  "Building Repairs":["GJ Construction","CML","Waterproofing Solutions"],
-  "Pests":["Rentokil"],
-  "Grounds":["PAE","Treesafe"],
-  "Security":["Security Concepts","ISS","Armourguard"],
-  "Fire Protection":["Wormald"],
-  "Cleaning":["CMOS","Initial"],
-  "HVAC":["Econair","1st Maintenance","Direct Controls"],
-  "Lifts":["Otis"],
-  "Doors":["Elite","Ulti-Group","GCOM"],
-  "Other":[]
+  "Refrigeration":[
+    {name:"Econair",email:"service@econair.co.nz"},
+    {name:"1st Maintenance",email:"service@1m.co.nz"}
+  ],
+  "Electrical":[
+    {name:"Dalton Electrical",email:"office@daltonelectrical.co.nz"},
+    {name:"Complete Electrical",email:"rex@complete247.co.nz"}
+  ],
+  "Plumbing":[
+    {name:"Plumbcraft",email:"booking@plumbcraft.co.nz"},
+    {name:"McSweeny O'Connell Plumbing",email:"mops@mops.co.nz"}
+  ],
+  "Equipment Repair":[
+    {name:"Washtech Limited",email:"service@washtech.co.nz"},
+    {name:"Complete Electrical",email:"rex@complete247.co.nz"},
+    {name:"Access Specialities",email:"service@accessspecs.co.nz"},
+    {name:"Vending Direct",email:"jessica.t@vendingdirect.co.nz"}
+  ],
+  "Building Repairs":[
+    {name:"GJ Construction",email:"job@gjconstruction.co.nz"},
+    {name:"CML",email:"jay@cml.co.nz"},
+    {name:"Waterproofing Solutions",email:"dave@waterproofsolutions.co.nz"},
+    {name:"Armstrong Security South Auckland",email:"otahuhu@armstrong.co.nz"},
+    {name:"Carus",email:"sam.mcarthur@carus.co.nz"},
+    {name:"North Shore Glass",email:"orders@northshoreglass.co.nz"}
+  ],
+  "Pests":[
+    {name:"Rentokil",email:"nationalaccounts-NZ@rentokil-initial.com"},
+    {name:"No More Birds",email:"admin@nomorebirds.co.nz"}
+  ],
+  "Grounds":[
+    {name:"PAE",email:"charleen.letcher@pae.co.nz"},
+    {name:"Treesafe",email:"admin@treesafe.co.nz"},
+    {name:"KP Linemarking",email:"luke@kpgroup.co.nz"},
+    {name:"CML",email:"jay@cml.co.nz"}
+  ],
+  "Security":[
+    {name:"Security Concepts",email:"tim@securityconcepts.co.nz"},
+    {name:"ISS Security",email:"service@issltd.co.nz"},
+    {name:"Armourguard",email:"atenai.talo@armourguard.co.nz"}
+  ],
+  "Fire Protection":[
+    {name:"Wormald",email:"key.accounts@jci.com"}
+  ],
+  "Cleaning":[
+    {name:"CMOS",email:"andrew@cmos.co.nz"},
+    {name:"Initial (Rentokil)",email:"nationalaccounts-NZ@rentokil-initial.com"}
+  ],
+  "HVAC":[
+    {name:"Econair",email:"service@econair.co.nz"},
+    {name:"1st Maintenance",email:"service@1m.co.nz"},
+    {name:"Direct Controls",email:"service@directcontrol.nz"},
+    {name:"NuWay Energy NZ",email:"sales@nuwayenergy.co.nz"},
+    {name:"Waterpro",email:"Service@waterpro.co.nz"}
+  ],
+  "Lifts":[
+    {name:"Otis",email:"otislineteamau@otis.com"}
+  ],
+  "Doors":[
+    {name:"Elite Services",email:"Admin@e-s.co.nz"},
+    {name:"Ulti-Group",email:"kathryn@ultigroup.co.nz"},
+    {name:"GCOM Services",email:"gcomservicesltd@gmail.com"}
+  ],
+  "Other":[
+    {name:"Alsco",email:"afc.serviceteam@alsco.co.nz"}
+  ]
 };
 
 document.getElementById("jobDate").value=new Date().toISOString().split("T")[0];
@@ -210,6 +262,10 @@ document.getElementById("submitBtn").onclick=function(){
   }
 
   var vendor=vf.style.display!=="none"?vs.value:"To be assigned";
+  var vendorEmail="";
+  if(vf.style.display!=="none"&&vs.selectedIndex>0){
+    vendorEmail=vs.options[vs.selectedIndex].getAttribute("data-email")||"";
+  }
   var ref="FH-"+new Date().getFullYear()+"-"+(Math.floor(Math.random()*9000)+1000);
   var phone=document.getElementById("phone").value.trim()||"Not provided";
   var date=document.getElementById("jobDate").value;
@@ -222,10 +278,15 @@ document.getElementById("submitBtn").onclick=function(){
   var btn=document.getElementById("submitBtn");
   btn.disabled=true;btn.textContent="Sending...";
 
+  var vendorEmail="";
+  if(vf.style.display!=="none"&&vs.selectedIndex>0){
+    vendorEmail=vs.options[vs.selectedIndex].getAttribute("data-email")||"";
+  }
   var jobData={
     job_ref:ref,date:date,site:site,reporter:rep,
     phone:phone,category:cat,vendor:vendor,
-    urgency:urg.value,description:desc
+    urgency:urg.value,description:desc,
+    vendor_email:vendorEmail
   };
 
   var emailSent=false;var sheetSaved=false;
@@ -260,7 +321,7 @@ document.getElementById("submitBtn").onclick=function(){
     service_id:EMAILJS_SERVICE,
     template_id:EMAILJS_TEMPLATE,
     user_id:EMAILJS_PUBLIC_KEY,
-    template_params:jobData
+    template_params:Object.assign({},jobData,{to_email:jobData.vendor_email||"mike.smillie@db.co.nz"})
   }));
 
   fetch(SHEETS_URL, {
