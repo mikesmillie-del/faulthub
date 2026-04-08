@@ -305,13 +305,16 @@ document.getElementById("submitBtn").onclick=function(){
   var btn=document.getElementById("submitBtn");
   btn.disabled=true;btn.textContent="Sending...";
 
-  function sendJob(photoUrl){
+  function sendJob(photoBase64,photoMime,photoName){
     var jobData={
       job_ref:ref,date:date,site:site,reporter:rep,
       phone:phone,category:cat,vendor:vendor,
       urgency:urg.value,description:desc,
       vendor_email:vendorEmail,
-      photo_url:photoUrl||""
+      photo_url:"",
+      photo_base64:photoBase64||"",
+      photo_mime:photoMime||"",
+      photo_name:photoName||""
     };
 
     var emailSent=false;var sheetSaved=false;
@@ -351,7 +354,7 @@ document.getElementById("submitBtn").onclick=function(){
         phone:phone,category:cat,vendor:vendor,
         urgency:urg.value,description:desc,
         to_email:vendorEmail||"mike.smillie@db.co.nz",
-        photo_link:photoUrl?"Photo attached: "+photoUrl:"No photo attached"
+        photo_link:photoBase64?"Photo submitted with job — see Google Drive FaultHub Photos folder":"No photo attached"
       }
     }));
 
@@ -369,22 +372,11 @@ document.getElementById("submitBtn").onclick=function(){
     var reader=new FileReader();
     reader.onload=function(ev){
       var base64=ev.target.result;
-      fetch(SHEETS_URL,{
-        method:"POST",
-        headers:{"Content-Type":"text/plain"},
-        body:JSON.stringify({
-          action:"photo",
-          image:base64,
-          mimeType:file.type,
-          filename:ref+"_"+file.name
-        })
-      }).then(function(r){return r.json();})
-        .then(function(d){sendJob(d.url||"");})
-        .catch(function(){sendJob("");});
+      sendJob(base64,file.type,ref+"_"+file.name);
     };
     reader.readAsDataURL(file);
   } else {
-    sendJob("");
+    sendJob("","","");
   }
 };
 
