@@ -123,6 +123,10 @@ textarea{min-height:90px;resize:vertical;}
           <label class="lbl">Assign to vendor</label>
           <div class="vpend">No vendors assigned yet — contact Facilities Manager</div>
         </div>
+        <div class="field full">
+          <label class="lbl">CC additional email (optional)</label>
+          <input type="email" id="ccEmail" placeholder="e.g. another.vendor@email.co.nz" autocomplete="off" />
+        </div>
         <div class="field full"><label class="lbl">Description <span class="req">*</span></label><textarea id="desc" placeholder="Describe the fault — include location within site, what you have noticed, and when it started."></textarea></div>
       </div>
     </div>
@@ -307,11 +311,13 @@ document.getElementById("submitBtn").onclick=function(){
   btn.disabled=true;btn.textContent="Sending...";
 
   function sendJob(photoUrl){
+    var ccEmail=document.getElementById("ccEmail").value.trim();
     var jobData={
       job_ref:ref,date:date,site:site,reporter:rep,
       phone:phone,category:cat,vendor:vendor,
       urgency:urg.value,description:desc,
       vendor_email:vendorEmail,
+      cc_email:ccEmail,
       photo_url:photoUrl||""
     };
 
@@ -352,7 +358,8 @@ document.getElementById("submitBtn").onclick=function(){
         phone:phone,category:cat,vendor:vendor,
         urgency:urg.value,description:desc,
         to_email:vendorEmail||"mike.smillie@db.co.nz",
-        photo_link:photoUrl?photoUrl:"No photo attached"
+        photo_link:photoUrl?photoUrl:"No photo attached",
+        cc_email:ccEmail||"" 
       }
     }));
 
@@ -385,7 +392,7 @@ document.getElementById("submitBtn").onclick=function(){
 document.getElementById("newBtn").onclick=function(){
   document.getElementById("frmScreen").style.display="block";
   document.getElementById("successScreen").style.display="none";
-  ["site","reporter","phone","desc"].forEach(function(id){document.getElementById(id).value="";});
+  ["site","reporter","phone","desc","ccEmail"].forEach(function(id){document.getElementById(id).value="";});
   document.getElementById("category").value="";
   document.getElementById("photoPreview").innerHTML="";
   document.getElementById("vendorField").style.display="none";
