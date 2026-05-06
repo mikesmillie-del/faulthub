@@ -358,7 +358,7 @@ document.getElementById("submitBtn").onclick=function(){
         phone:phone,category:cat,vendor:vendor,
         urgency:urg.value,description:desc,
         to_email:vendorEmail||"mike.smillie@db.co.nz",
-        photo_link:photoUrl?photoUrl:"No photo attached",
+        photo_link:photoUrl||"",
         cc_email:ccEmail||"" 
       }
     }));
