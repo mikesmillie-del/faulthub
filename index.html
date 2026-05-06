@@ -377,7 +377,6 @@ document.getElementById("submitBtn").onclick=function(){
     var formData=new FormData();
     formData.append("file",file);
     formData.append("upload_preset","faulthub");
-    formData.append("public_id",ref);
     fetch("https://api.cloudinary.com/v1_1/dqvdpjjvz/image/upload",{
       method:"POST",
       body:formData
