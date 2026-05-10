@@ -476,6 +476,7 @@ document.getElementById("newBtn").onclick=function(){
   ["site","reporter","phone","desc","ccEmail"].forEach(function(id){document.getElementById(id).value="";});
   document.getElementById("category").value="";
   document.getElementById("photoPreview").innerHTML="";
+  document.getElementById("photoInput").value="";
   document.getElementById("vendorField").style.display="none";
   document.getElementById("vendorPend").style.display="none";
   document.querySelectorAll("input[name=urg]").forEach(function(r){r.checked=false;});
