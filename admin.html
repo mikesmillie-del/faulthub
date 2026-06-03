@@ -40,8 +40,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .badges{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0;}
 .badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:var(--rs);}
 .b-logged{background:#E6F1FB;color:#0C447C;}
+.b-sent{background:#EEEDFE;color:#3C3489;}
 .b-acknowledged{background:#EAF3DE;color:#27500A;}
 .b-inprogress{background:#FAEEDA;color:#633806;}
+.b-awaiting{background:#FAEEDA;color:#633806;}
 .b-complete{background:#EAF3DE;color:#27500A;}
 .b-cancelled{background:#F1EFE8;color:#444441;}
 .b-urgent{background:#FCEBEB;color:#791F1F;}
@@ -119,8 +121,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <span class="filter-label">Filter:</span>
     <select id="filterStatus" onchange="renderJobs()">
       <option value="">All statuses</option>
-      <option>Logged</option><option>Acknowledged</option>
-      <option>In Progress</option><option>Complete</option><option>Cancelled</option>
+      <option>Logged</option><option>Sent to Vendor</option><option>Acknowledged</option>
+      <option>In Progress</option><option>Awaiting Review</option><option>Complete</option><option>Cancelled</option>
     </select>
     <select id="filterUrgency" onchange="renderJobs()">
       <option value="">All urgency</option>
@@ -135,7 +137,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
-var SHEETS_URL="https://script.google.com/macros/s/AKfycbyzu9q7FU4F1kBvYn2Dzqff62-UvUqJDpT1U09DczFdtJkbDmO3KGEVO1gHTkh_Ov0p/exec";
+var SHEETS_URL="https://script.google.com/macros/s/AKfycbznEt1FaSSECbxXC3U6jwy6jTj9z1ZOXw6fK5u1vqWq1MBVF2U8u755CLZGv6FHQ_QM/exec";
 var jobs=[];
 var localStatus={};
 var localNotes={};
@@ -157,11 +159,11 @@ function fmtDate(d){
 }
 
 var statusClass={
-  "Logged":"b-logged","Acknowledged":"b-acknowledged",
-  "In Progress":"b-inprogress","Complete":"b-complete","Cancelled":"b-cancelled"
+  "Logged":"b-logged","Sent to Vendor":"b-sent","Acknowledged":"b-acknowledged",
+  "In Progress":"b-inprogress","Awaiting Review":"b-awaiting","Complete":"b-complete","Cancelled":"b-cancelled"
 };
 var urgencyClass={"Urgent":"b-urgent","Soon":"b-soon","Routine":"b-routine"};
-var statuses=["Logged","Acknowledged","In Progress","Complete","Cancelled"];
+var statuses=["Logged","Sent to Vendor","Acknowledged","In Progress","Awaiting Review","Complete","Cancelled"];
 
 function saveToSheet(ref,field,value){
   fetch(SHEETS_URL,{
@@ -205,7 +207,7 @@ function getNote(job){return localNotes[job.job_ref]!==undefined?localNotes[job.
 function updateMetrics(filtered_all){
   var open=filtered_all.filter(function(j){var s=getStatus(j);return s!=="Complete"&&s!=="Cancelled";}).length;
   var urgent=filtered_all.filter(function(j){var s=getStatus(j);return j.urgency==="Urgent"&&s!=="Complete"&&s!=="Cancelled";}).length;
-  var awaiting=filtered_all.filter(function(j){var s=getStatus(j);return s==="Acknowledged"||s==="Logged";}).length;
+  var awaiting=filtered_all.filter(function(j){var s=getStatus(j);return s==="Acknowledged"||s==="Awaiting Review"||s==="Logged"||s==="Sent to Vendor";}).length;
   var complete=filtered_all.filter(function(j){return getStatus(j)==="Complete";}).length;
   document.getElementById("mOpen").textContent=open;
   document.getElementById("mUrgent").textContent=urgent;
