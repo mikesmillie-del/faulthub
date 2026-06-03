@@ -175,6 +175,11 @@ textarea{min-height:90px;resize:vertical;}
   </div>
 </div>
 
+<form id="sheetForm" method="POST" target="sheetFrame" style="display:none;">
+  <input type="hidden" name="payload" id="sheetPayload">
+</form>
+<iframe name="sheetFrame" id="sheetFrame" style="display:none;" title="hidden"></iframe>
+
 <script type="text/javascript">
 var vendors={
   "Refrigeration":[
@@ -329,42 +334,14 @@ document.getElementById("submitBtn").onclick=function(){
       photo_url:photoUrl||""
     };
 
-    var emailSent=false;var sheetSaved=false;
-    var emailError=false;var sheetError=false;
+    var emailSent=false;
 
-    function checkDone(){
-      if((emailSent||emailError)&&(sheetSaved||sheetError)){
-        if(!emailSent && !sheetSaved){
-          btn.disabled=false;btn.textContent="Submit fault report";
-          alert("Something went wrong. Please try again.");
-          return;
-        }
-        btn.textContent="Verifying...";
-        setTimeout(function(){verifyAndShow(0);}, 3500);
-      }
-    }
-
-    function verifyAndShow(retries){
-      fetch(SHEETS_URL+"?action=getJobs")
-        .then(function(r){return r.json();})
-        .then(function(data){
-          var found=false;
-          if(data && data.jobs){
-            found=data.jobs.some(function(j){return j.job_ref===ref;});
-          }
-          if(!found && retries<1){
-            setTimeout(function(){verifyAndShow(retries+1);}, 3000);
-          } else {
-            showResult(found);
-          }
-        })
-        .catch(function(){
-          if(retries<1){
-            setTimeout(function(){verifyAndShow(retries+1);}, 3000);
-          } else {
-            showResult(false);
-          }
-        });
+    // Reliable sheet save via hidden form POST (avoids no-cors fetch flakiness)
+    function postToSheet(){
+      var f=document.getElementById("sheetForm");
+      f.action=SHEETS_URL;
+      document.getElementById("sheetPayload").value=JSON.stringify(jobData);
+      f.submit();
     }
 
     function showResult(saved){
@@ -392,15 +369,42 @@ document.getElementById("submitBtn").onclick=function(){
       }
     }
 
+    // Verify the save landed; if not, re-send and retry a few times before giving up
+    var attempts=0;
+    var MAX_ATTEMPTS=4;
+    function verify(){
+      fetch(SHEETS_URL+"?action=getJobs")
+        .then(function(r){return r.json();})
+        .then(function(data){
+          var found=data&&data.jobs&&data.jobs.some(function(j){return j.job_ref===ref;});
+          if(found){
+            showResult(true);
+          } else if(attempts<MAX_ATTEMPTS){
+            attempts++;
+            postToSheet();
+            setTimeout(verify, 3000);
+          } else {
+            showResult(false);
+          }
+        })
+        .catch(function(){
+          if(attempts<MAX_ATTEMPTS){
+            attempts++;
+            setTimeout(verify, 3000);
+          } else {
+            showResult(false);
+          }
+        });
+    }
+
     var xhr=new XMLHttpRequest();
     xhr.open("POST","https://api.emailjs.com/api/v1.0/email/send");
     xhr.setRequestHeader("Content-Type","application/json");
     xhr.onload=function(){
       if(xhr.status===200){emailSent=true;}
-      else{console.error("EmailJS error:",xhr.responseText);emailError=true;}
-      checkDone();
+      else{console.error("EmailJS error:",xhr.responseText);}
     };
-    xhr.onerror=function(){emailError=true;checkDone();};
+    xhr.onerror=function(){console.error("EmailJS network error");};
     xhr.send(JSON.stringify({
       service_id:EMAILJS_SERVICE,
       template_id:EMAILJS_TEMPLATE,
@@ -415,12 +419,9 @@ document.getElementById("submitBtn").onclick=function(){
       }
     }));
 
-    fetch(SHEETS_URL,{
-      method:"POST",
-      mode:"no-cors",
-      body:JSON.stringify(jobData)
-    }).then(function(){sheetSaved=true;checkDone();})
-      .catch(function(e){console.error("Sheets error",e);sheetError=true;checkDone();});
+    postToSheet();
+    btn.textContent="Saving...";
+    setTimeout(verify, 3500);
   }
 
   var photoInput=document.getElementById("photoInput");
