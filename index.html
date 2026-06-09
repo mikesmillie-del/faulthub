@@ -323,7 +323,7 @@ document.getElementById("submitBtn").onclick=function(){
 
   function sendJob(photoUrl){
     var userCC=document.getElementById("ccEmail").value.trim();
-    var ADMIN_CC="mike.smillie@db.co.nz";
+    var ADMIN_CC="mike.smillie@db.co.nz,mike@myvessellog.com";
     var ccEmail=userCC?(userCC+","+ADMIN_CC):ADMIN_CC;
     var jobData={
       job_ref:ref,date:date,site:site,reporter:rep,
@@ -333,6 +333,8 @@ document.getElementById("submitBtn").onclick=function(){
       cc_email:ccEmail,
       photo_url:photoUrl||""
     };
+    // Machine-readable data line for the email-to-sheet importer (base64 so email can't mangle it)
+    var fhdata="FHDATA::"+btoa(unescape(encodeURIComponent(JSON.stringify(jobData))))+"::END";
 
     var emailSent=false;
 
@@ -351,21 +353,17 @@ document.getElementById("submitBtn").onclick=function(){
       document.getElementById("oUrg").textContent=urg.value;
       document.getElementById("frmScreen").style.display="none";
       document.getElementById("successScreen").style.display="block";
+      document.getElementById("saveWarning").style.display="none";
       var icon=document.querySelector("#successScreen .sicon");
       var title=document.querySelector("#successScreen .stitle");
       var msg=document.querySelector("#successScreen .smsg");
+      icon.style.display="flex";
+      title.textContent="Fault logged";
+      msg.style.display="block";
       if(saved){
-        document.getElementById("saveWarning").style.display="none";
-        icon.style.display="flex";
-        title.textContent="Fault logged";
-        msg.style.display="block";
         msg.textContent="Your report has been submitted and the vendor will be notified.";
       } else {
-        document.getElementById("saveWarning").style.display="block";
-        document.getElementById("warnRef").textContent=ref;
-        icon.style.display="none";
-        title.textContent="Job emailed — but not saved";
-        msg.style.display="none";
+        msg.textContent="Your report has been submitted and the vendor notified. It will appear in the dashboard within a few minutes.";
       }
     }
 
@@ -415,7 +413,8 @@ document.getElementById("submitBtn").onclick=function(){
         urgency:urg.value,description:desc,
         to_email:vendorEmail||"mike.smillie@db.co.nz",
         photo_html:photoUrl?'<p style="margin-top: 16px;"><strong>Photo:</strong> <a href="'+photoUrl+'">View photo</a></p>':'',
-        cc_email:ccEmail||"" 
+        cc_email:ccEmail||"",
+        fhdata:fhdata
       }
     }));
 
