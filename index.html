@@ -56,8 +56,6 @@ textarea{min-height:90px;resize:vertical;}
 .sl{color:var(--muted);}.sv{font-weight:600;}
 .nbtn{background:transparent;border:1px solid var(--border);border-radius:var(--rs);padding:10px 24px;font-size:14px;cursor:pointer;font-family:inherit;}
 .nbtn:hover{background:#eeede8;}
-.save-warning{display:none;background:#FCEBEB;border:1px solid #F09595;color:#791F1F;padding:14px 18px;border-radius:var(--r);max-width:360px;margin:0 auto 1.25rem;font-size:13px;line-height:1.5;text-align:left;}
-.save-warning strong{font-size:14px;}
 @media(max-width:480px){.grid{grid-template-columns:1fr;}.ugroup{grid-template-columns:1fr;}body{padding:1rem .75rem;}}
 
 .login-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;}
@@ -100,7 +98,7 @@ textarea{min-height:90px;resize:vertical;}
         <div class="field"><label class="lbl">Site / location <span class="req">*</span></label><input type="text" id="site" placeholder="e.g. DB Breweries Papatoetoe" /></div>
         <div class="field"><label class="lbl">Your name <span class="req">*</span></label><input type="text" id="reporter" placeholder="Full name" /></div>
         <div class="field"><label class="lbl">Contact number</label><input type="tel" id="phone" placeholder="Phone or extension" /></div>
-        <div class="field"><label class="lbl">Date <span class="req">*</span></label><input type="date" id="jobDate" /></div>
+        <div class="field"><label class="lbl">Date <span class="req">*</span></label><input type="text" id="jobDate" placeholder="DD/MM/YYYY" /></div>
       </div>
     </div>
 
@@ -160,10 +158,6 @@ textarea{min-height:90px;resize:vertical;}
     <div class="sicon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
     <div class="stitle">Fault logged</div>
     <div class="smsg">Your report has been submitted and the vendor will be notified.</div>
-    <div class="save-warning" id="saveWarning">
-      <strong>⚠ Save to register failed</strong>
-      <div style="margin-top:6px;">The vendor was emailed but the job was not saved to the dashboard. Please notify Mike Smillie with job ref <span id="warnRef" style="font-weight:600;"></span> so he can add it manually and check the system.</div>
-    </div>
     <div class="sdetail">
       <div class="srow"><span class="sl">Job ref</span><span class="sv" id="oRef"></span></div>
       <div class="srow"><span class="sl">Category</span><span class="sv" id="oCat"></span></div>
@@ -174,11 +168,6 @@ textarea{min-height:90px;resize:vertical;}
     <button class="nbtn" id="newBtn" type="button">Log another fault</button>
   </div>
 </div>
-
-<form id="sheetForm" method="POST" target="sheetFrame" style="display:none;">
-  <input type="hidden" name="payload" id="sheetPayload">
-</form>
-<iframe name="sheetFrame" id="sheetFrame" style="display:none;" title="hidden"></iframe>
 
 <script type="text/javascript">
 var vendors={
@@ -253,7 +242,7 @@ var vendors={
   ]
 };
 
-document.getElementById("jobDate").value=new Date().toISOString().split("T")[0];
+var _d=new Date();document.getElementById("jobDate").value=('0'+_d.getDate()).slice(-2)+'/'+('0'+(_d.getMonth()+1)).slice(-2)+'/'+_d.getFullYear();
 
 document.getElementById("category").onchange=function(){
   var cat=this.value;
@@ -313,7 +302,7 @@ document.getElementById("submitBtn").onclick=function(){
   var phone=document.getElementById("phone").value.trim()||"Not provided";
   var date=document.getElementById("jobDate").value;
 
-  var SHEETS_URL="https://script.google.com/macros/s/AKfycbznEt1FaSSECbxXC3U6jwy6jTj9z1ZOXw6fK5u1vqWq1MBVF2U8u755CLZGv6FHQ_QM/exec";
+  var SHEETS_URL="https://script.google.com/macros/s/AKfycbyzu9q7FU4F1kBvYn2Dzqff62-UvUqJDpT1U09DczFdtJkbDmO3KGEVO1gHTkh_Ov0p/exec";
   var EMAILJS_PUBLIC_KEY="GY4e_uE9KvDgmxFOJ";
   var EMAILJS_SERVICE="service_bj44lwp";
   var EMAILJS_TEMPLATE="template_hy3yy0a";
@@ -322,9 +311,7 @@ document.getElementById("submitBtn").onclick=function(){
   btn.disabled=true;btn.textContent="Sending...";
 
   function sendJob(photoUrl){
-    var userCC=document.getElementById("ccEmail").value.trim();
-    var ADMIN_CC="mike.smillie@db.co.nz,mike@myvessellog.com";
-    var ccEmail=userCC?(userCC+","+ADMIN_CC):ADMIN_CC;
+    var ccEmail=document.getElementById("ccEmail").value.trim();
     var jobData={
       job_ref:ref,date:date,site:site,reporter:rep,
       phone:phone,category:cat,vendor:vendor,
@@ -333,66 +320,24 @@ document.getElementById("submitBtn").onclick=function(){
       cc_email:ccEmail,
       photo_url:photoUrl||""
     };
-    // Machine-readable data line for the email-to-sheet importer (base64 so email can't mangle it)
-    var fhdata="FHDATA::"+btoa(unescape(encodeURIComponent(JSON.stringify(jobData))))+"::END";
 
-    var emailSent=false;
+    var emailSent=false;var sheetSaved=false;
+    var emailError=false;var sheetError=false;
 
-    // Reliable sheet save via hidden form POST (avoids no-cors fetch flakiness)
-    function postToSheet(){
-      var f=document.getElementById("sheetForm");
-      f.action=SHEETS_URL;
-      document.getElementById("sheetPayload").value=JSON.stringify(jobData);
-      f.submit();
-    }
-
-    function showResult(saved){
-      document.getElementById("oRef").textContent=ref;
-      document.getElementById("oCat").textContent=cat;
-      document.getElementById("oVen").textContent=vendor;
-      document.getElementById("oUrg").textContent=urg.value;
-      document.getElementById("frmScreen").style.display="none";
-      document.getElementById("successScreen").style.display="block";
-      document.getElementById("saveWarning").style.display="none";
-      var icon=document.querySelector("#successScreen .sicon");
-      var title=document.querySelector("#successScreen .stitle");
-      var msg=document.querySelector("#successScreen .smsg");
-      icon.style.display="flex";
-      title.textContent="Fault logged";
-      msg.style.display="block";
-      if(saved){
-        msg.textContent="Your report has been submitted and the vendor will be notified.";
-      } else {
-        msg.textContent="Your report has been submitted and the vendor notified. It will appear in the dashboard within a few minutes.";
+    function checkDone(){
+      if((emailSent||emailError)&&(sheetSaved||sheetError)){
+        if(emailSent||sheetSaved){
+          document.getElementById("oRef").textContent=ref;
+          document.getElementById("oCat").textContent=cat;
+          document.getElementById("oVen").textContent=vendor;
+          document.getElementById("oUrg").textContent=urg.value;
+          document.getElementById("frmScreen").style.display="none";
+          document.getElementById("successScreen").style.display="block";
+        } else {
+          btn.disabled=false;btn.textContent="Submit fault report";
+          alert("Something went wrong. Please try again.");
+        }
       }
-    }
-
-    // Verify the save landed; if not, re-send and retry a few times before giving up
-    var attempts=0;
-    var MAX_ATTEMPTS=4;
-    function verify(){
-      fetch(SHEETS_URL+"?action=getJobs")
-        .then(function(r){return r.json();})
-        .then(function(data){
-          var found=data&&data.jobs&&data.jobs.some(function(j){return j.job_ref===ref;});
-          if(found){
-            showResult(true);
-          } else if(attempts<MAX_ATTEMPTS){
-            attempts++;
-            postToSheet();
-            setTimeout(verify, 3000);
-          } else {
-            showResult(false);
-          }
-        })
-        .catch(function(){
-          if(attempts<MAX_ATTEMPTS){
-            attempts++;
-            setTimeout(verify, 3000);
-          } else {
-            showResult(false);
-          }
-        });
     }
 
     var xhr=new XMLHttpRequest();
@@ -400,9 +345,10 @@ document.getElementById("submitBtn").onclick=function(){
     xhr.setRequestHeader("Content-Type","application/json");
     xhr.onload=function(){
       if(xhr.status===200){emailSent=true;}
-      else{console.error("EmailJS error:",xhr.responseText);}
+      else{console.error("EmailJS error:",xhr.responseText);emailError=true;}
+      checkDone();
     };
-    xhr.onerror=function(){console.error("EmailJS network error");};
+    xhr.onerror=function(){emailError=true;checkDone();};
     xhr.send(JSON.stringify({
       service_id:EMAILJS_SERVICE,
       template_id:EMAILJS_TEMPLATE,
@@ -413,14 +359,16 @@ document.getElementById("submitBtn").onclick=function(){
         urgency:urg.value,description:desc,
         to_email:vendorEmail||"mike.smillie@db.co.nz",
         photo_html:photoUrl?'<p style="margin-top: 16px;"><strong>Photo:</strong> <a href="'+photoUrl+'">View photo</a></p>':'',
-        cc_email:ccEmail||"",
-        fhdata:fhdata
+        cc_email:ccEmail||"" 
       }
     }));
 
-    postToSheet();
-    btn.textContent="Saving...";
-    setTimeout(verify, 3500);
+    fetch(SHEETS_URL,{
+      method:"POST",
+      mode:"no-cors",
+      body:JSON.stringify(jobData)
+    }).then(function(){sheetSaved=true;checkDone();})
+      .catch(function(e){console.error("Sheets error",e);sheetError=true;checkDone();});
   }
 
   var photoInput=document.getElementById("photoInput");
@@ -476,13 +424,12 @@ document.getElementById("newBtn").onclick=function(){
   ["site","reporter","phone","desc","ccEmail"].forEach(function(id){document.getElementById(id).value="";});
   document.getElementById("category").value="";
   document.getElementById("photoPreview").innerHTML="";
-  document.getElementById("photoInput").value="";
   document.getElementById("vendorField").style.display="none";
   document.getElementById("vendorPend").style.display="none";
   document.querySelectorAll("input[name=urg]").forEach(function(r){r.checked=false;});
   document.getElementById("submitBtn").disabled=false;
   document.getElementById("submitBtn").textContent="Submit fault report";
-  document.getElementById("jobDate").value=new Date().toISOString().split("T")[0];
+  var _r=new Date();document.getElementById("jobDate").value=('0'+_r.getDate()).slice(-2)+'/'+('0'+(_r.getMonth()+1)).slice(-2)+'/'+_r.getFullYear();
 };
 
 var PASS="DBadmin2026";
