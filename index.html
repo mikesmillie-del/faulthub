@@ -306,12 +306,14 @@ document.getElementById("submitBtn").onclick=function(){
   var EMAILJS_PUBLIC_KEY="GY4e_uE9KvDgmxFOJ";
   var EMAILJS_SERVICE="service_bj44lwp";
   var EMAILJS_TEMPLATE="template_hy3yy0a";
+  var ADMIN_CC="mike@myvessellog.com";
 
   var btn=document.getElementById("submitBtn");
   btn.disabled=true;btn.textContent="Sending...";
 
   function sendJob(photoUrl){
-    var ccEmail=document.getElementById("ccEmail").value.trim();
+    var extraCc=document.getElementById("ccEmail").value.trim();
+    var ccEmail=extraCc?(ADMIN_CC+","+extraCc):ADMIN_CC;
     var jobData={
       job_ref:ref,date:date,site:site,reporter:rep,
       phone:phone,category:cat,vendor:vendor,
@@ -359,7 +361,7 @@ document.getElementById("submitBtn").onclick=function(){
         urgency:urg.value,description:desc,
         to_email:vendorEmail||"mike.smillie@db.co.nz",
         photo_html:photoUrl?'<p style="margin-top: 16px;"><strong>Photo:</strong> <a href="'+photoUrl+'">View photo</a></p>':'',
-        cc_email:ccEmail||"" 
+        cc_email:ccEmail
       }
     }));
 
