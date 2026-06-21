@@ -98,7 +98,7 @@ textarea{min-height:90px;resize:vertical;}
         <div class="field"><label class="lbl">Site / location <span class="req">*</span></label><input type="text" id="site" placeholder="e.g. DB Breweries Papatoetoe" /></div>
         <div class="field"><label class="lbl">Your name <span class="req">*</span></label><input type="text" id="reporter" placeholder="Full name" /></div>
         <div class="field"><label class="lbl">Contact number</label><input type="tel" id="phone" placeholder="Phone or extension" /></div>
-        <div class="field"><label class="lbl">Date <span class="req">*</span></label><input type="text" id="jobDate" placeholder="DD/MM/YYYY" /></div>
+        <div class="field"><label class="lbl">Date <span class="req">*</span></label><input type="date" id="jobDate" /></div>
       </div>
     </div>
 
@@ -124,8 +124,8 @@ textarea{min-height:90px;resize:vertical;}
           <div class="vpend">No vendors assigned yet — contact Facilities Manager</div>
         </div>
         <div class="field full">
-          <label class="lbl">CC additional email (optional)</label>
-          <input type="email" id="ccEmail" placeholder="e.g. another.vendor@email.co.nz" autocomplete="off" />
+          <label class="lbl">CC additional email(s) (optional)</label>
+          <input type="text" id="ccEmail" placeholder="e.g. person1@email.co.nz, person2@email.co.nz" autocomplete="off" />
         </div>
         <div class="field full"><label class="lbl">Description <span class="req">*</span></label><textarea id="desc" placeholder="Describe the fault — include location within site, what you have noticed, and when it started."></textarea></div>
       </div>
@@ -144,7 +144,7 @@ textarea{min-height:90px;resize:vertical;}
       <div class="slabel">Photo (optional)</div>
       <div class="pzone" id="pzone">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5" style="margin:0 auto 8px;display:block;"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3"/><path d="M8 7V5a1 1 0 011-1h6a1 1 0 011 1v2"/></svg>
-        <div class="ptxt"><span>Tap to upload</span> a photo</div>
+        <div class="ptxt"><span>Tap to upload</span> or drag a photo here</div>
         <div class="ptxt" style="margin-top:4px;font-size:11px;">JPG or PNG</div>
       </div>
       <input type="file" id="photoInput" accept="image/*" multiple>
@@ -237,13 +237,12 @@ var vendors={
   ],
   "Other":[
     {name:"Alsco",email:"afc.serviceteam@alsco.co.nz"},
-    {name:"PAE",email:"joanna.guttery@pae.co.nz"},
-    {name:"DB Facilities (Mike Smillie)",email:"mike.smillie@db.co.nz"},
-    {name:"Total Access",email:"hirenow@totalaccess.co.nz"}
+    {name:"PAE",email:"paeservice@pae.co.nz"},
+    {name:"DB Facilities (Mike Smillie)",email:"mike.smillie@db.co.nz"}
   ]
 };
 
-var _d=new Date();document.getElementById("jobDate").value=('0'+_d.getDate()).slice(-2)+'/'+('0'+(_d.getMonth()+1)).slice(-2)+'/'+_d.getFullYear();
+document.getElementById("jobDate").value=new Date().toISOString().split("T")[0];
 
 document.getElementById("category").onchange=function(){
   var cat=this.value;
@@ -307,14 +306,24 @@ document.getElementById("submitBtn").onclick=function(){
   var EMAILJS_PUBLIC_KEY="GY4e_uE9KvDgmxFOJ";
   var EMAILJS_SERVICE="service_bj44lwp";
   var EMAILJS_TEMPLATE="template_hy3yy0a";
-  var ADMIN_CC="mike@myvessellog.com";
+
+  var ccRaw=document.getElementById("ccEmail").value.trim();
+  var ccParts=[];
+  if(ccRaw){
+    ccParts=ccRaw.split(",").map(function(s){return s.trim();}).filter(Boolean);
+    var emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    var badEmails=ccParts.filter(function(e){return !emailPattern.test(e);});
+    if(badEmails.length>0){
+      alert("Please check the CC email address(es) — this doesn't look right: "+badEmails.join(", ")+"\n\nSeparate multiple addresses with a comma, e.g. person1@email.co.nz, person2@email.co.nz");
+      return;
+    }
+  }
 
   var btn=document.getElementById("submitBtn");
   btn.disabled=true;btn.textContent="Sending...";
 
   function sendJob(photoUrl){
-    var extraCc=document.getElementById("ccEmail").value.trim();
-    var ccEmail=extraCc?(ADMIN_CC+","+extraCc):ADMIN_CC;
+    var ccEmail=ccParts.join(",");
     var jobData={
       job_ref:ref,date:date,site:site,reporter:rep,
       phone:phone,category:cat,vendor:vendor,
@@ -362,7 +371,7 @@ document.getElementById("submitBtn").onclick=function(){
         urgency:urg.value,description:desc,
         to_email:vendorEmail||"mike.smillie@db.co.nz",
         photo_html:photoUrl?'<p style="margin-top: 16px;"><strong>Photo:</strong> <a href="'+photoUrl+'">View photo</a></p>':'',
-        cc_email:ccEmail
+        cc_email:ccEmail||"" 
       }
     }));
 
@@ -432,7 +441,7 @@ document.getElementById("newBtn").onclick=function(){
   document.querySelectorAll("input[name=urg]").forEach(function(r){r.checked=false;});
   document.getElementById("submitBtn").disabled=false;
   document.getElementById("submitBtn").textContent="Submit fault report";
-  var _r=new Date();document.getElementById("jobDate").value=('0'+_r.getDate()).slice(-2)+'/'+('0'+(_r.getMonth()+1)).slice(-2)+'/'+_r.getFullYear();
+  document.getElementById("jobDate").value=new Date().toISOString().split("T")[0];
 };
 
 var PASS="DBadmin2026";
