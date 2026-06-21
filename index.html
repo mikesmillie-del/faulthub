@@ -98,7 +98,7 @@ textarea{min-height:90px;resize:vertical;}
         <div class="field"><label class="lbl">Site / location <span class="req">*</span></label><input type="text" id="site" placeholder="e.g. DB Breweries Papatoetoe" /></div>
         <div class="field"><label class="lbl">Your name <span class="req">*</span></label><input type="text" id="reporter" placeholder="Full name" /></div>
         <div class="field"><label class="lbl">Contact number</label><input type="tel" id="phone" placeholder="Phone or extension" /></div>
-        <div class="field"><label class="lbl">Date <span class="req">*</span></label><input type="date" id="jobDate" /></div>
+        <div class="field"><label class="lbl">Date <span class="req">*</span></label><input type="text" id="jobDate" placeholder="DD/MM/YYYY" /></div>
       </div>
     </div>
 
@@ -242,7 +242,15 @@ var vendors={
   ]
 };
 
-document.getElementById("jobDate").value=new Date().toISOString().split("T")[0];
+function todayNZ(){
+  var d=new Date();
+  var dd=String(d.getDate()).padStart(2,"0");
+  var mm=String(d.getMonth()+1).padStart(2,"0");
+  var yyyy=d.getFullYear();
+  return dd+"/"+mm+"/"+yyyy;
+}
+
+document.getElementById("jobDate").value=todayNZ();
 
 document.getElementById("category").onchange=function(){
   var cat=this.value;
@@ -441,7 +449,7 @@ document.getElementById("newBtn").onclick=function(){
   document.querySelectorAll("input[name=urg]").forEach(function(r){r.checked=false;});
   document.getElementById("submitBtn").disabled=false;
   document.getElementById("submitBtn").textContent="Submit fault report";
-  document.getElementById("jobDate").value=new Date().toISOString().split("T")[0];
+  document.getElementById("jobDate").value=todayNZ();
 };
 
 var PASS="DBadmin2026";
