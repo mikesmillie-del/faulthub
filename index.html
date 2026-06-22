@@ -331,7 +331,8 @@ document.getElementById("submitBtn").onclick=function(){
   btn.disabled=true;btn.textContent="Sending...";
 
   function sendJob(photoUrl){
-    var ccEmail=ccParts.join(",");
+    var adminEmail="mike.smillie@db.co.nz";
+    var ccEmail=ccParts.length>0 ? adminEmail+","+ccParts.join(",") : adminEmail;
     var jobData={
       job_ref:ref,date:date,site:site,reporter:rep,
       phone:phone,category:cat,vendor:vendor,
