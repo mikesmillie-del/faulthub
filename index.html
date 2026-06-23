@@ -144,8 +144,8 @@ textarea{min-height:90px;resize:vertical;}
       <div class="slabel">Photo (optional)</div>
       <div class="pzone" id="pzone">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5" style="margin:0 auto 8px;display:block;"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3"/><path d="M8 7V5a1 1 0 011-1h6a1 1 0 011 1v2"/></svg>
-        <div class="ptxt"><span>Tap to upload</span> or drag a photo here</div>
-        <div class="ptxt" style="margin-top:4px;font-size:11px;">JPG or PNG</div>
+        <div class="ptxt"><span>Tap to upload</span> or drag photos here</div>
+        <div class="ptxt" style="margin-top:4px;font-size:11px;">JPG or PNG &middot; up to 3 photos</div>
       </div>
       <input type="file" id="photoInput" accept="image/*" multiple>
       <div id="photoPreview"></div>
@@ -277,11 +277,18 @@ document.getElementById("pzone").onclick=function(){
 document.getElementById("photoInput").onchange=function(){
   var prev=document.getElementById("photoPreview");
   prev.innerHTML="";
-  for(var i=0;i<this.files.length;i++){
+  var count=Math.min(this.files.length,3);
+  for(var i=0;i<count;i++){
     var img=document.createElement("img");
     img.className="thumb";
     img.src=URL.createObjectURL(this.files[i]);
     prev.appendChild(img);
+  }
+  if(this.files.length>3){
+    var note=document.createElement("div");
+    note.style.cssText="font-size:12px;color:var(--soon);width:100%;margin-top:4px;";
+    note.textContent="Only the first 3 photos will be sent.";
+    prev.appendChild(note);
   }
 };
 
@@ -331,8 +338,7 @@ document.getElementById("submitBtn").onclick=function(){
   btn.disabled=true;btn.textContent="Sending...";
 
   function sendJob(photoUrl){
-    var adminEmail="mike.smillie@db.co.nz";
-    var ccEmail=ccParts.length>0 ? adminEmail+","+ccParts.join(",") : adminEmail;
+    var ccEmail=ccParts.join(",");
     var jobData={
       job_ref:ref,date:date,site:site,reporter:rep,
       phone:phone,category:cat,vendor:vendor,
@@ -341,6 +347,15 @@ document.getElementById("submitBtn").onclick=function(){
       cc_email:ccEmail,
       photo_url:photoUrl||""
     };
+
+    var photoList=(photoUrl||"").split(",").filter(Boolean);
+    var photoHtml="";
+    if(photoList.length){
+      var linksHtml=photoList.map(function(u,i){
+        return '<a href="'+u+'">'+(photoList.length>1?"View photo "+(i+1):"View photo")+'</a>';
+      }).join(' &nbsp;&middot;&nbsp; ');
+      photoHtml='<p style="margin-top: 16px;"><strong>'+(photoList.length>1?"Photos":"Photo")+':</strong> '+linksHtml+'</p>';
+    }
 
     var emailSent=false;var sheetSaved=false;
     var emailError=false;var sheetError=false;
@@ -379,7 +394,7 @@ document.getElementById("submitBtn").onclick=function(){
         phone:phone,category:cat,vendor:vendor,
         urgency:urg.value,description:desc,
         to_email:vendorEmail||"mike.smillie@db.co.nz",
-        photo_html:photoUrl?'<p style="margin-top: 16px;"><strong>Photo:</strong> <a href="'+photoUrl+'">View photo</a></p>':'',
+        photo_html:photoHtml,
         cc_email:ccEmail||"" 
       }
     }));
@@ -393,18 +408,28 @@ document.getElementById("submitBtn").onclick=function(){
   }
 
   var photoInput=document.getElementById("photoInput");
-  if(photoInput.files&&photoInput.files.length>0){
-    var file=photoInput.files[0];
-    compressImage(file,1600,1600,0.8,function(compressedBlob){
-      var formData=new FormData();
-      formData.append("file",compressedBlob);
-      formData.append("upload_preset","faulthub");
-      fetch("https://api.cloudinary.com/v1_1/dqvdpjjvz/image/upload",{
-        method:"POST",
-        body:formData
-      }).then(function(r){return r.json();})
-        .then(function(d){sendJob(d.secure_url||"");})
-        .catch(function(){sendJob("");});
+  var files=photoInput.files?Array.prototype.slice.call(photoInput.files,0,3):[];
+  if(files.length>0){
+    var urls=[];
+    var done=0;
+    var finishOne=function(){
+      done++;
+      if(done===files.length){
+        sendJob(urls.filter(Boolean).join(","));
+      }
+    };
+    files.forEach(function(file,idx){
+      compressImage(file,1600,1600,0.8,function(compressedBlob){
+        var formData=new FormData();
+        formData.append("file",compressedBlob);
+        formData.append("upload_preset","faulthub");
+        fetch("https://api.cloudinary.com/v1_1/dqvdpjjvz/image/upload",{
+          method:"POST",
+          body:formData
+        }).then(function(r){return r.json();})
+          .then(function(d){urls[idx]=d.secure_url||"";finishOne();})
+          .catch(function(){urls[idx]="";finishOne();});
+      });
     });
   } else {
     sendJob("");

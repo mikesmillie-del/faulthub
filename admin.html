@@ -137,7 +137,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
-var SHEETS_URL="https://script.google.com/macros/s/AKfycbznEt1FaSSECbxXC3U6jwy6jTj9z1ZOXw6fK5u1vqWq1MBVF2U8u755CLZGv6FHQ_QM/exec";
+var SHEETS_URL="https://script.google.com/macros/s/AKfycbyzu9q7FU4F1kBvYn2Dzqff62-UvUqJDpT1U09DczFdtJkbDmO3KGEVO1gHTkh_Ov0p/exec";
 var jobs=[];
 var localStatus={};
 var localNotes={};
@@ -254,7 +254,7 @@ function renderJobs(){
       +'</div><div class="badges"><span class="badge '+uc+'">'+j.urgency+'</span><span class="badge '+sc+'">'+status+'</span></div></div>'
       +(note?'<div class="job-note">Note: '+note+'</div>':'')
       +'<div class="job-desc">'+j.description+'</div>'
-      +(j.photo_url?'<div style="margin-top:6px;"><a href="'+j.photo_url+'" target="_blank" style="font-size:12px;color:#185FA5;">View photo</a></div>':'')
+      +(j.photo_url?'<div style="margin-top:6px;">'+String(j.photo_url).split(",").filter(Boolean).map(function(u,i,arr){return '<a href="'+u.trim()+'" target="_blank" style="font-size:12px;color:#185FA5;margin-right:14px;">'+(arr.length>1?"View photo "+(i+1):"View photo")+'</a>';}).join("")+'</div>':'')
       +'<div class="job-actions">'
       +'<select class="act-select" onchange="changeStatus(\''+j.job_ref+'\',this.value)"'+(status==="Cancelled"?" disabled":"")+'>'+statuses.map(function(s){return'<option value="'+s+'"'+(status===s?" selected":"")+'>'+s+'</option>';}).join("")+'</select>'
       +'<button class="act-btn" onclick="toggleNote(\''+j.job_ref+'\')"'+(status==="Cancelled"?" disabled":"")+'>+ Note</button>'
