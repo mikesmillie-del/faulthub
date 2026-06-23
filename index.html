@@ -421,7 +421,7 @@ document.getElementById("submitBtn").onclick=function(){
     files.forEach(function(file,idx){
       compressImage(file,1600,1600,0.8,function(compressedBlob){
         var formData=new FormData();
-        formData.append("file",compressedBlob);
+        formData.append("file",compressedBlob,"fh_"+ref+"_"+(idx+1)+".jpg");
         formData.append("upload_preset","faulthub");
         fetch("https://api.cloudinary.com/v1_1/dqvdpjjvz/image/upload",{
           method:"POST",
