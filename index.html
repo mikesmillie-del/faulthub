@@ -338,7 +338,14 @@ document.getElementById("submitBtn").onclick=function(){
   btn.disabled=true;btn.textContent="Sending...";
 
   function sendJob(photoUrl){
-    var ccEmail=ccParts.join(",");
+    // Always copy the Facilities Manager on every job so there is a record
+    // in his inbox and visible proof the vendor was notified. Merge with any
+    // addresses typed into the CC box, and never list the same address twice.
+    var ADMIN_CC="mike.smillie@db.co.nz";
+    var ccAll=ccParts.slice();
+    var alreadyThere=ccAll.some(function(e){return e.toLowerCase()===ADMIN_CC.toLowerCase();});
+    if(!alreadyThere) ccAll.push(ADMIN_CC);
+    var ccEmail=ccAll.join(",");
     var jobData={
       job_ref:ref,date:date,site:site,reporter:rep,
       phone:phone,category:cat,vendor:vendor,
