@@ -357,34 +357,12 @@ document.getElementById("submitBtn").onclick=function(){
       photoHtml='<p style="margin-top: 16px;"><strong>'+(photoList.length>1?"Photos":"Photo")+':</strong> '+linksHtml+'</p>';
     }
 
-    var emailSent=false;var sheetSaved=false;
-    var emailError=false;var sheetError=false;
-
-    function checkDone(){
-      if((emailSent||emailError)&&(sheetSaved||sheetError)){
-        if(emailSent||sheetSaved){
-          document.getElementById("oRef").textContent=ref;
-          document.getElementById("oCat").textContent=cat;
-          document.getElementById("oVen").textContent=vendor;
-          document.getElementById("oUrg").textContent=urg.value;
-          document.getElementById("frmScreen").style.display="none";
-          document.getElementById("successScreen").style.display="block";
-        } else {
-          btn.disabled=false;btn.textContent="Submit fault report";
-          alert("Something went wrong. Please try again.");
-        }
-      }
-    }
-
+    // ---- 1. Send the vendor email (runs on its own; does not gate success) ----
     var xhr=new XMLHttpRequest();
     xhr.open("POST","https://api.emailjs.com/api/v1.0/email/send");
     xhr.setRequestHeader("Content-Type","application/json");
-    xhr.onload=function(){
-      if(xhr.status===200){emailSent=true;}
-      else{console.error("EmailJS error:",xhr.responseText);emailError=true;}
-      checkDone();
-    };
-    xhr.onerror=function(){emailError=true;checkDone();};
+    xhr.onload=function(){ if(xhr.status!==200){ console.error("EmailJS error:",xhr.responseText); } };
+    xhr.onerror=function(){ console.error("EmailJS request failed"); };
     xhr.send(JSON.stringify({
       service_id:EMAILJS_SERVICE,
       template_id:EMAILJS_TEMPLATE,
@@ -399,12 +377,72 @@ document.getElementById("submitBtn").onclick=function(){
       }
     }));
 
-    fetch(SHEETS_URL,{
-      method:"POST",
-      mode:"no-cors",
-      body:JSON.stringify(jobData)
-    }).then(function(){sheetSaved=true;checkDone();})
-      .catch(function(e){console.error("Sheets error",e);sheetError=true;checkDone();});
+    // ---- 2. Save the job to the sheet, then CONFIRM it actually landed ----
+    // The old form fired the data at Google and showed "Fault logged" without
+    // ever checking it arrived. Now we send it, then read the sheet back (the
+    // exact same read the dashboard uses) to make sure the job is really there.
+    // If it isn't, we wait, try once more, and only show success once the job
+    // is confirmed in the sheet. If we still can't confirm it, we say so plainly
+    // instead of pretending it worked.
+
+    function postJob(){
+      try{
+        fetch(SHEETS_URL,{method:"POST",mode:"no-cors",body:JSON.stringify(jobData)}).catch(function(){});
+      }catch(e){}
+    }
+
+    // Read the sheet and report whether THIS job's reference is present.
+    function readBack(cb){
+      fetch(SHEETS_URL+"?action=getJobs&t="+Date.now())
+        .then(function(r){return r.json();})
+        .then(function(d){
+          var hit=d&&d.jobs&&d.jobs.some(function(j){return String(j.job_ref).trim()===ref;});
+          cb(!!hit);
+        })
+        .catch(function(){cb(false);});
+    }
+
+    // Check the sheet a few times across the given delays. Resolves true the
+    // moment the job is found, or false if it never appears in that window.
+    function verifyChain(delays,onResult){
+      var i=0;
+      (function next(){
+        if(i>=delays.length){onResult(false);return;}
+        setTimeout(function(){
+          readBack(function(found){
+            if(found){onResult(true);} else {i++;next();}
+          });
+        },delays[i]);
+      })();
+    }
+
+    function showSuccess(){
+      document.getElementById("oRef").textContent=ref;
+      document.getElementById("oCat").textContent=cat;
+      document.getElementById("oVen").textContent=vendor;
+      document.getElementById("oUrg").textContent=urg.value;
+      document.getElementById("frmScreen").style.display="none";
+      document.getElementById("successScreen").style.display="block";
+    }
+
+    function showFailure(){
+      btn.disabled=false;btn.textContent="Submit fault report";
+      alert("This job could NOT be confirmed in the system, so it may not have saved.\n\nYour details are still filled in below \u2014 please press \"Submit fault report\" again.\n\nIf it keeps failing, contact Mike before treating the job as logged.");
+    }
+
+    // First attempt: send, then watch for ~21 seconds (long enough that a slow
+    // but successful save is never mistaken for a failure, which would risk a
+    // duplicate). If still not found, send once more and watch again.
+    btn.textContent="Saving \u2014 please wait\u2026";
+    postJob();
+    verifyChain([2500,4000,6000,9000],function(ok){
+      if(ok){showSuccess();return;}
+      btn.textContent="Retrying \u2014 please wait\u2026";
+      postJob();
+      verifyChain([2500,4000,6000],function(ok2){
+        if(ok2){showSuccess();} else {showFailure();}
+      });
+    });
   }
 
   var photoInput=document.getElementById("photoInput");
