@@ -59,6 +59,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .act-btn.danger:hover{background:#FCEBEB;}
 .note-area{margin-top:8px;display:none;}
 .note-area textarea{width:100%;font-size:13px;font-family:inherit;min-height:60px;resize:none;border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;}
+.job-pocost{font-size:12px;color:var(--muted);margin-top:6px;padding:6px 10px;background:#EEF5EC;border-radius:var(--rs);border-left:2px solid var(--routine);font-weight:600;}
+.pocost-lbl{display:block;font-size:12px;color:var(--muted);font-weight:500;margin:6px 0 4px;}
+.pocost-input{width:100%;font-size:13px;font-family:inherit;border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;}
 .note-save{font-size:12px;padding:5px 12px;margin-top:6px;border:1px solid var(--border);border-radius:var(--rs);background:#fff;cursor:pointer;font-family:inherit;}
 .note-save:hover{background:#f0efe9;}
 .empty{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:14px;}
@@ -141,6 +144,8 @@ var SHEETS_URL="https://script.google.com/macros/s/AKfycbznEt1FaSSECbxXC3U6jwy6j
 var jobs=[];
 var localStatus={};
 var localNotes={};
+var localPO={};
+var localCost={};
 
 function fmtDate(d){
   if(!d)return"";
@@ -203,6 +208,14 @@ function populateCatFilter(){
 
 function getStatus(job){return localStatus[job.job_ref]||job.status||"Logged";}
 function getNote(job){return localNotes[job.job_ref]!==undefined?localNotes[job.job_ref]:(job.note||"");}
+function getPO(job){return localPO[job.job_ref]!==undefined?localPO[job.job_ref]:(job.po||"");}
+function getCost(job){return localCost[job.job_ref]!==undefined?localCost[job.job_ref]:(job.cost||"");}
+function fmtCost(c){
+  if(c===""||c===null||c===undefined)return"";
+  var n=Number(String(c).replace(/[^0-9.\-]/g,""));
+  if(isNaN(n))return"$"+c;
+  return "$"+n.toLocaleString("en-NZ",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
 
 function updateMetrics(filtered_all){
   var open=filtered_all.filter(function(j){var s=getStatus(j);return s!=="Complete"&&s!=="Cancelled";}).length;
@@ -242,6 +255,8 @@ function renderJobs(){
   var html=filtered.map(function(j){
     var status=getStatus(j);
     var note=getNote(j);
+    var po=getPO(j);
+    var cost=getCost(j);
     var sc=statusClass[status]||"b-logged";
     var uc=urgencyClass[j.urgency]||"b-routine";
     var cardClass="job-card"+(status==="Cancelled"?" cancelled":"")+(status==="Complete"?" complete":"")+(j.urgency==="Urgent"&&status!=="Complete"&&status!=="Cancelled"?" urgent-card":"");
@@ -253,16 +268,25 @@ function renderJobs(){
       +'<div class="job-vendor">Vendor: '+j.vendor+' &middot; Logged by: '+j.reporter+(j.phone&&j.phone!=="Not provided"?' ('+j.phone+')':'')+'</div>'
       +'</div><div class="badges"><span class="badge '+uc+'">'+j.urgency+'</span><span class="badge '+sc+'">'+status+'</span></div></div>'
       +(note?'<div class="job-note">Note: '+note+'</div>':'')
+      +((po||cost)?'<div class="job-pocost">'+(po?'PO: '+po:'')+(po&&cost?' &nbsp;&middot;&nbsp; ':'')+(cost?'Cost: '+fmtCost(cost):'')+'</div>':'')
       +'<div class="job-desc">'+j.description+'</div>'
       +(j.photo_url?'<div style="margin-top:6px;">'+String(j.photo_url).split(",").filter(Boolean).map(function(u,i,arr){return '<a href="'+u.trim()+'" target="_blank" style="font-size:12px;color:#185FA5;margin-right:14px;">'+(arr.length>1?"View photo "+(i+1):"View photo")+'</a>';}).join("")+'</div>':'')
       +'<div class="job-actions">'
       +'<select class="act-select" onchange="changeStatus(\''+j.job_ref+'\',this.value)"'+(status==="Cancelled"?" disabled":"")+'>'+statuses.map(function(s){return'<option value="'+s+'"'+(status===s?" selected":"")+'>'+s+'</option>';}).join("")+'</select>'
       +'<button class="act-btn" onclick="toggleNote(\''+j.job_ref+'\')"'+(status==="Cancelled"?" disabled":"")+'>+ Note</button>'
+      +'<button class="act-btn" onclick="togglePOCost(\''+j.job_ref+'\')"'+(status==="Cancelled"?" disabled":"")+'>+ PO / Cost</button>'
       +(showCancel?'<button class="act-btn danger" onclick="cancelJob(\''+j.job_ref+'\')">Cancel job</button>':'')
       +'</div>'
       +'<div class="note-area" id="note-'+j.job_ref+'">'
       +'<textarea id="noteinput-'+j.job_ref+'" placeholder="Add a note or update…"></textarea>'
       +'<button class="note-save" onclick="saveNote(\''+j.job_ref+'\')">Save note</button>'
+      +'</div>'
+      +'<div class="note-area pocost-area" id="pocost-'+j.job_ref+'">'
+      +'<label class="pocost-lbl">PO number</label>'
+      +'<input type="text" class="pocost-input" id="poinput-'+j.job_ref+'" value="'+String(po).replace(/"/g,"&quot;")+'" placeholder="e.g. 6170654509">'
+      +'<label class="pocost-lbl">Cost / value</label>'
+      +'<input type="text" class="pocost-input" id="costinput-'+j.job_ref+'" value="'+String(cost).replace(/"/g,"&quot;")+'" placeholder="e.g. 2299.20">'
+      +'<button class="note-save" onclick="savePOCost(\''+j.job_ref+'\')">Save PO / Cost</button>'
       +'</div></div>';
   }).join("");
   document.getElementById("jobsList").innerHTML=html;
@@ -286,6 +310,19 @@ function saveNote(ref){
     renderJobs();
     saveToSheet(ref,"note",val);
   }
+}
+
+function togglePOCost(ref){
+  var el=document.getElementById("pocost-"+ref);
+  el.style.display=el.style.display==="block"?"none":"block";
+}
+
+function savePOCost(ref){
+  var po=document.getElementById("poinput-"+ref).value.trim();
+  var cost=document.getElementById("costinput-"+ref).value.trim();
+  if(po!==""){localPO[ref]=po;saveToSheet(ref,"po",po);}
+  if(cost!==""){localCost[ref]=cost;saveToSheet(ref,"cost",cost);}
+  renderJobs();
 }
 
 function cancelJob(ref){
