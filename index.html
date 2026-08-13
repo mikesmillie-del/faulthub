@@ -95,7 +95,10 @@ textarea{min-height:90px;resize:vertical;}
     <div class="card">
       <div class="slabel">Site details</div>
       <div class="grid">
-        <div class="field"><label class="lbl">Site / location <span class="req">*</span></label><input type="text" id="site" placeholder="e.g. DB Breweries Papatoetoe" /></div>
+        <div class="field">
+          <label class="lbl">Site / location <span class="req">*</span></label>
+          <select id="site" onchange="refreshVendors()"><option value="">— Select site —</option></select>
+        </div>
         <div class="field"><label class="lbl">Your name <span class="req">*</span></label><input type="text" id="reporter" placeholder="Full name" /></div>
         <div class="field"><label class="lbl">Contact number</label><input type="tel" id="phone" placeholder="Phone or extension" /></div>
         <div class="field"><label class="lbl">Date <span class="req">*</span></label><input type="text" id="jobDate" placeholder="DD/MM/YYYY" /></div>
@@ -107,12 +110,8 @@ textarea{min-height:90px;resize:vertical;}
       <div class="grid">
         <div class="field full">
           <label class="lbl">Category <span class="req">*</span></label>
-          <select id="category">
+          <select id="category" onchange="refreshVendors()">
             <option value="">— Select category —</option>
-            <option>Refrigeration</option><option>Electrical</option><option>Plumbing</option>
-            <option>Equipment Repair</option><option>Building Repairs</option><option>Pests</option>
-            <option>Grounds</option><option>Security</option><option>Fire Protection</option>
-            <option>Cleaning</option><option>HVAC</option><option>Lifts</option><option>Doors</option><option>Other</option>
           </select>
         </div>
         <div class="vhide full" id="vendorField">
@@ -121,7 +120,7 @@ textarea{min-height:90px;resize:vertical;}
         </div>
         <div class="field full" id="vendorPend" style="display:none;">
           <label class="lbl">Assign to vendor</label>
-          <div class="vpend">No vendors assigned yet — contact Facilities Manager</div>
+          <div class="vpend" id="vendorPendMsg">Choose a site and category to see vendors.</div>
         </div>
         <div class="field full">
           <label class="lbl">CC additional email(s) (optional)</label>
@@ -170,77 +169,89 @@ textarea{min-height:90px;resize:vertical;}
 </div>
 
 <script type="text/javascript">
-var vendors={
-  "Refrigeration":[
-    {name:"Econair",email:"service@econair.co.nz"},
-    {name:"1st Maintenance",email:"service@1m.co.nz"}
-  ],
-  "Electrical":[
-    {name:"Dalton Electrical",email:"office@daltonelectrical.co.nz"},
-    {name:"Complete Electrical",email:"rex@complete247.co.nz"}
-  ],
-  "Plumbing":[
-    {name:"Plumbcraft",email:"booking@plumbcraft.co.nz"},
-    {name:"McSweeny O'Connell Plumbing",email:"mops@mops.co.nz"}
-  ],
-  "Equipment Repair":[
-    {name:"Washtech Limited",email:"service@washtech.co.nz"},
-    {name:"Complete Electrical",email:"rex@complete247.co.nz"},
-    {name:"Access Specialities",email:"service@accessspecs.co.nz"},
-    {name:"Vending Direct",email:"jessica.t@vendingdirect.co.nz"}
-  ],
-  "Building Repairs":[
-    {name:"GJ Construction",email:"job@gjconstruction.co.nz"},
-    {name:"CML",email:"jay@cml.co.nz"},
-    {name:"Waterproofing Solutions",email:"dave@waterproofsolutions.co.nz"},
-    {name:"Armstrong Security South Auckland",email:"otahuhu@armstrong.co.nz"},
-    {name:"Carus",email:"sam.mcarthur@carus.co.nz"},
-    {name:"North Shore Glass",email:"orders@northshoreglass.co.nz"},
-    {name:"APS",email:"sarah@apsltd.co.nz"}
-  ],
-  "Pests":[
-    {name:"Rentokil",email:"nationalaccounts-NZ@rentokil-initial.com"},
-    {name:"No More Birds",email:"admin@nomorebirds.co.nz"}
-  ],
-  "Grounds":[
-    {name:"PAE",email:"charleen.letcher@pae.co.nz"},
-    {name:"Treesafe",email:"admin@treesafe.co.nz"},
-    {name:"KP Linemarking",email:"luke@kpgroup.co.nz"},
-    {name:"CML",email:"jay@cml.co.nz"}
-  ],
-  "Security":[
-    {name:"Security Concepts",email:"info@securityconcepts.co.nz"},
-    {name:"ISS Security",email:"service@issltd.co.nz"},
-    {name:"Armourguard",email:"atenai.talo@armourguard.co.nz"}
-  ],
-  "Fire Protection":[
-    {name:"Wormald",email:"key.accounts@jci.com"}
-  ],
-  "Cleaning":[
-    {name:"CMOS",email:"andrew@cmos.co.nz"},
-    {name:"Initial (Rentokil)",email:"nationalaccounts-NZ@rentokil-initial.com"}
-  ],
-  "HVAC":[
-    {name:"Econair",email:"service@econair.co.nz"},
-    {name:"1st Maintenance",email:"service@1m.co.nz"},
-    {name:"Direct Controls",email:"service@directcontrol.nz"},
-    {name:"NuWay Energy NZ",email:"sales@nuwayenergy.co.nz"},
-    {name:"Waterpro",email:"Service@waterpro.co.nz"}
-  ],
-  "Lifts":[
-    {name:"Otis",email:"otislineteamau@otis.com"}
-  ],
-  "Doors":[
-    {name:"Elite Services",email:"Admin@e-s.co.nz"},
-    {name:"Ulti-Group",email:"hello@ultigroup.co.nz"},
-    {name:"GCOM Services",email:"gcomservicesltd@gmail.com"}
-  ],
-  "Other":[
-    {name:"Alsco",email:"afc.serviceteam@alsco.co.nz"},
-    {name:"PAE",email:"paeservice@pae.co.nz"},
-    {name:"DB Facilities (Mike Smillie)",email:"mike.smillie@db.co.nz"}
-  ]
-};
+// One place for the connection URL, shared by config loading and job submission.
+var SHEETS_URL="https://script.google.com/macros/s/AKfycbznEt1FaSSECbxXC3U6jwy6jTj9z1ZOXw6fK5u1vqWq1MBVF2U8u755CLZGv6FHQ_QM/exec";
+
+// Sites, categories and vendors now come from the Sheet, not from this file.
+var CONFIG={sites:[],categories:[],vendors:[]};
+
+// Load the site/category/vendor list from the Sheet and fill the dropdowns.
+function loadConfig(){
+  var siteSel=document.getElementById("site");
+  var catSel=document.getElementById("category");
+  siteSel.innerHTML='<option value="">Loading…</option>';
+  catSel.innerHTML='<option value="">Loading…</option>';
+  fetch(SHEETS_URL+"?action=getConfig&t="+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(d){
+      CONFIG.sites=(d&&d.sites)||[];
+      CONFIG.categories=(d&&d.categories)||[];
+      CONFIG.vendors=(d&&d.vendors)||[];
+
+      siteSel.innerHTML='<option value="">— Select site —</option>';
+      CONFIG.sites.forEach(function(s){
+        var o=document.createElement("option");o.value=s;o.textContent=s;siteSel.appendChild(o);
+      });
+
+      catSel.innerHTML='<option value="">— Select category —</option>';
+      CONFIG.categories.forEach(function(c){
+        var o=document.createElement("option");o.value=c;o.textContent=c;catSel.appendChild(o);
+      });
+    })
+    .catch(function(){
+      siteSel.innerHTML='<option value="">— Select site —</option>';
+      catSel.innerHTML='<option value="">— Select category —</option>';
+      alert("Couldn't load the site and vendor list.\n\nCheck your internet connection and refresh the page (Ctrl+Shift+R). If it keeps happening, contact Mike.");
+    });
+}
+
+// Build the vendor dropdown for the chosen site + category.
+// Shows vendors tagged to that exact site, plus any tagged "All sites".
+function refreshVendors(){
+  var site=document.getElementById("site").value;
+  var cat=document.getElementById("category").value;
+  var vf=document.getElementById("vendorField");
+  var vpf=document.getElementById("vendorPend");
+  var vpm=document.getElementById("vendorPendMsg");
+  var vs=document.getElementById("vendor");
+
+  vf.style.display="none";
+  vpf.style.display="none";
+  vs.innerHTML='<option value="">— Select vendor —</option>';
+
+  if(!cat) return;                 // wait until a category is chosen
+  if(!site){
+    vpm.textContent="Choose a site first, then we'll show the vendors for it.";
+    vpf.style.display="flex";
+    return;
+  }
+
+  var list=CONFIG.vendors.filter(function(v){
+    if(v.category!==cat) return false;
+    var vsite=String(v.site||"").toLowerCase();
+    return vsite==="all sites" || v.site===site;
+  });
+
+  // Remove any duplicate vendor names (e.g. listed both site-specific and All sites).
+  var seen={};
+  list=list.filter(function(v){
+    var k=String(v.name).toLowerCase();
+    if(seen[k]) return false; seen[k]=true; return true;
+  });
+
+  if(list.length===0){
+    vpm.textContent="No vendors set up for "+cat+" at "+site+" — contact your Facilities Manager.";
+    vpf.style.display="flex";
+    return;
+  }
+
+  list.forEach(function(v){
+    var o=document.createElement("option");
+    o.value=v.name;o.textContent=v.name;o.setAttribute("data-email",v.email||"");
+    vs.appendChild(o);
+  });
+  vf.style.display="flex";
+}
 
 function todayNZ(){
   var d=new Date();
@@ -251,24 +262,7 @@ function todayNZ(){
 }
 
 document.getElementById("jobDate").value=todayNZ();
-
-document.getElementById("category").onchange=function(){
-  var cat=this.value;
-  var vf=document.getElementById("vendorField");
-  var vpf=document.getElementById("vendorPend");
-  var vs=document.getElementById("vendor");
-  vf.style.display="none";
-  vpf.style.display="none";
-  if(!cat)return;
-  var list=vendors[cat]||[];
-  if(list.length===0){vpf.style.display="flex";return;}
-  vs.innerHTML='<option value="">— Select vendor —</option>';
-  for(var i=0;i<list.length;i++){
-    var o=document.createElement("option");
-    o.value=list[i].name;o.textContent=list[i].name;o.setAttribute("data-email",list[i].email||"");vs.appendChild(o);
-  }
-  vf.style.display="flex";
-};
+loadConfig();
 
 document.getElementById("pzone").onclick=function(){
   document.getElementById("photoInput").click();
@@ -317,7 +311,6 @@ document.getElementById("submitBtn").onclick=function(){
   var phone=document.getElementById("phone").value.trim()||"Not provided";
   var date=document.getElementById("jobDate").value;
 
-  var SHEETS_URL="https://script.google.com/macros/s/AKfycbznEt1FaSSECbxXC3U6jwy6jTj9z1ZOXw6fK5u1vqWq1MBVF2U8u755CLZGv6FHQ_QM/exec";
   var EMAILJS_PUBLIC_KEY="GY4e_uE9KvDgmxFOJ";
   var EMAILJS_SERVICE="service_bj44lwp";
   var EMAILJS_TEMPLATE="template_hy3yy0a";
@@ -512,7 +505,8 @@ function compressImage(file,maxWidth,maxHeight,quality,callback){
 document.getElementById("newBtn").onclick=function(){
   document.getElementById("frmScreen").style.display="block";
   document.getElementById("successScreen").style.display="none";
-  ["site","reporter","phone","desc","ccEmail"].forEach(function(id){document.getElementById(id).value="";});
+  ["reporter","phone","desc","ccEmail"].forEach(function(id){document.getElementById(id).value="";});
+  document.getElementById("site").value="";
   document.getElementById("category").value="";
   document.getElementById("photoPreview").innerHTML="";
   document.getElementById("vendorField").style.display="none";
