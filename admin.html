@@ -91,6 +91,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .del:hover{background:#FCEBEB;}
 .add-vendor-btn{font-size:13px;padding:8px 14px;border:1px dashed var(--accent);color:var(--accent);border-radius:var(--rs);background:#fff;cursor:pointer;font-family:inherit;margin-top:6px;}
 .add-vendor-btn:hover{background:#E6F1FB;}
+.company-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.cfield{display:flex;flex-direction:column;gap:5px;}
+.cfield.full{grid-column:1/-1;}
+.cfield label{font-size:13px;color:var(--muted);font-weight:500;}
+.cfield input[type=text]{font-size:14px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--rs);font-family:inherit;}
+.cfield input[type=color]{width:56px;height:38px;padding:2px;border:1px solid var(--border);border-radius:var(--rs);background:#fff;cursor:pointer;}
+@media(max-width:640px){.company-grid{grid-template-columns:1fr;}}
 @media(max-width:640px){
   .vrow-head{display:none;}
   .vrow{grid-template-columns:1fr 1fr;border:1px solid var(--border);border-radius:var(--rs);padding:10px;gap:8px;}
@@ -186,6 +193,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
 
     <div class="settings-card">
+      <div class="settings-title">Company</div>
+      <div class="hint">Your company name and colour appear on the form and this dashboard. The admin email is CC’d on every job and used as the contact when a category has no vendor yet.</div>
+      <div class="company-grid">
+        <div class="cfield full"><label>Company name</label><input type="text" id="coName" placeholder="e.g. DB Breweries — Facilities"></div>
+        <div class="cfield full"><label>Admin email</label><input type="text" id="coEmail" placeholder="e.g. name@company.co.nz"></div>
+        <div class="cfield"><label>Brand colour</label><input type="color" id="coColour" value="#185FA5"></div>
+      </div>
+    </div>
+
+    <div class="settings-card">
       <div class="settings-title">Sites</div>
       <div class="hint">The locations staff choose from on the form. Remove one with the &times; button.</div>
       <div id="sitesList"></div>
@@ -219,6 +236,24 @@ var localStatus={};
 var localNotes={};
 var localPO={};
 var localCost={};
+
+// Apply the company name and brand colour to the dashboard.
+function applyBrandingDash(b){
+  b=b||{};
+  if(b.colour){document.documentElement.style.setProperty("--accent",b.colour);}
+  if(b.name){
+    var els=document.querySelectorAll(".hs, .login-sub");
+    for(var i=0;i<els.length;i++){els[i].textContent=b.name;}
+    document.title="FaultHub Admin — "+b.name;
+  }
+}
+function loadBranding(){
+  fetch(SHEETS_URL+"?action=getConfig&t="+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(d){ if(d&&d.branding) applyBrandingDash(d.branding); })
+    .catch(function(){});
+}
+loadBranding();
 
 function fmtDate(d){
   if(!d)return"";
@@ -440,6 +475,10 @@ function loadConfigForEdit(){
       editVendors=((d&&d.vendors)||[]).map(function(v){
         return {site:v.site||"All sites",category:v.category||"",name:v.name||"",email:v.email||""};
       });
+      var b=(d&&d.branding)||{};
+      document.getElementById("coName").value=b.name||"";
+      document.getElementById("coEmail").value=b.adminEmail||"";
+      document.getElementById("coColour").value=(b.colour&&/^#/.test(b.colour))?b.colour:"#185FA5";
       renderSites();
       renderVendors();
     })
@@ -524,13 +563,15 @@ function setSaveStatus(msg,kind){
 
 // Build a comparable fingerprint of a sites+vendors set, so we can confirm the
 // save really landed by reading it back.
-function configSignature(sites,vendors){
+function configSignature(sites,vendors,branding){
   var s=sites.map(function(x){return String(x).trim();}).filter(Boolean).join("§");
   var v=vendors
     .map(function(x){return [String(x.site||"All sites").trim(),String(x.category||"").trim(),String(x.name||"").trim(),String(x.email||"").trim()];})
     .filter(function(r){return r[2]!=="";})
     .map(function(r){return r.join("|");}).join("~");
-  return s+" ‖ "+v;
+  var b=branding||{};
+  var bsig=[String(b.name||"").trim(),String(b.colour||"").trim(),String(b.adminEmail||"").trim()].join("|");
+  return s+" ‖ "+v+" ‖ "+bsig;
 }
 
 function saveSettings(){
@@ -547,6 +588,12 @@ function saveSettings(){
     return {site:String(v.site||"All sites").trim(),category:String(v.category||"").trim(),name:String(v.name||"").trim(),email:String(v.email||"").trim()};
   }).filter(function(v){return v.name!=="";});
 
+  var branding={
+    name:document.getElementById("coName").value.trim(),
+    colour:(document.getElementById("coColour").value||"#185FA5").trim(),
+    adminEmail:document.getElementById("coEmail").value.trim()
+  };
+
   // Gentle warning if any vendor is missing a category or email (still allowed).
   var incomplete=vendors.filter(function(v){return !v.category||!v.email;}).length;
   if(incomplete>0){
@@ -556,10 +603,10 @@ function saveSettings(){
   setSaveStatus("Saving…","saving");
 
   try{
-    fetch(SHEETS_URL,{method:"POST",mode:"no-cors",body:JSON.stringify({action:"saveConfig",sites:sites,vendors:vendors})}).catch(function(){});
+    fetch(SHEETS_URL,{method:"POST",mode:"no-cors",body:JSON.stringify({action:"saveConfig",sites:sites,vendors:vendors,branding:branding})}).catch(function(){});
   }catch(e){}
 
-  var want=configSignature(sites,vendors);
+  var want=configSignature(sites,vendors,branding);
   var delays=[2500,4000,6000,9000];
   var idx=0;
   (function check(){
@@ -571,8 +618,9 @@ function saveSettings(){
       fetch(SHEETS_URL+"?action=getConfig&t="+Date.now())
         .then(function(r){return r.json();})
         .then(function(d){
-          var got=configSignature((d&&d.sites)||[],(d&&d.vendors)||[]);
+          var got=configSignature((d&&d.sites)||[],(d&&d.vendors)||[],(d&&d.branding)||{});
           if(got===want){
+            applyBrandingDash(branding);
             setSaveStatus("Saved ✓ — the form will show these next time it’s opened.","ok");
           } else { idx++; check(); }
         })
