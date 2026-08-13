@@ -17,7 +17,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .admin-badge{font-size:11px;background:#E6F1FB;color:#0C447C;padding:4px 10px;border-radius:var(--rs);font-weight:600;}
 .refresh-btn{font-size:13px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--rs);background:#fff;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;}
 .refresh-btn:hover{background:#f0efe9;}
-.refresh-icon{width:14px;height:14px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;}
+.refresh-icon{width:14px;height:14px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.25rem;}
 .metric{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;}
 .metric-label{font-size:12px;color:var(--muted);margin-bottom:4px;}
@@ -70,6 +70,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .form-link:hover{background:#E6F1FB;}
 @media(max-width:600px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr));}.job-top{flex-direction:column;}.badges{flex-direction:row;align-items:flex-start;}}
 
+/* ---- Settings screen ---- */
+.settings-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem;margin-bottom:1rem;}
+.settings-title{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.hint{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.55;}
+.settings-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap;}
+.save-status{font-size:13px;font-weight:500;}
+.save-status.ok{color:var(--routine);}
+.save-status.err{color:var(--urgent);}
+.save-status.saving{color:var(--muted);}
+.save-btn{padding:9px 18px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+.save-btn:hover{opacity:.88;}
+.srow-edit{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--rs);margin-bottom:6px;font-size:14px;background:#fff;}
+.add-row{display:flex;gap:8px;margin-top:10px;}
+.add-row input{flex:1;font-size:14px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--rs);font-family:inherit;}
+.vrow-head{display:grid;grid-template-columns:150px 150px 1fr 1fr 34px;gap:8px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;margin-bottom:6px;padding:0 2px;}
+.vrow{display:grid;grid-template-columns:150px 150px 1fr 1fr 34px;gap:8px;margin-bottom:8px;align-items:center;}
+.vrow select,.vrow input{font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--rs);font-family:inherit;background:#fff;width:100%;}
+.del{width:32px;height:32px;border:1px solid #F09595;color:var(--urgent);background:#fff;border-radius:var(--rs);cursor:pointer;font-size:17px;line-height:1;flex-shrink:0;}
+.del:hover{background:#FCEBEB;}
+.add-vendor-btn{font-size:13px;padding:8px 14px;border:1px dashed var(--accent);color:var(--accent);border-radius:var(--rs);background:#fff;cursor:pointer;font-family:inherit;margin-top:6px;}
+.add-vendor-btn:hover{background:#E6F1FB;}
+@media(max-width:640px){
+  .vrow-head{display:none;}
+  .vrow{grid-template-columns:1fr 1fr;border:1px solid var(--border);border-radius:var(--rs);padding:10px;gap:8px;}
+  .vrow .del{grid-column:1/-1;width:100%;height:34px;}
+}
+
 .login-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;}
 .login-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:2.5rem 2rem;width:100%;max-width:360px;text-align:center;}
 .login-logo{width:52px;height:52px;border-radius:var(--rs);background:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;}
@@ -106,6 +133,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
       <a class="form-link" href="/index.html" target="_blank">View form</a>
+      <button class="refresh-btn" id="settingsBtn" onclick="showSettings()">
+        <svg class="refresh-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H8a1.65 1.65 0 0 0 1-1.51V2a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V8a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
       <button class="refresh-btn" id="refreshBtn">
         <svg class="refresh-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
         Refresh
@@ -113,30 +144,72 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
   </div>
 
-  <div class="metrics" id="metrics">
-    <div class="metric"><div class="metric-label">Open jobs</div><div class="metric-val" id="mOpen">—</div></div>
-    <div class="metric"><div class="metric-label">Urgent</div><div class="metric-val red" id="mUrgent">—</div></div>
-    <div class="metric"><div class="metric-label">Awaiting action</div><div class="metric-val amber" id="mAwaiting">—</div></div>
-    <div class="metric"><div class="metric-label">Complete</div><div class="metric-val green" id="mComplete">—</div></div>
+  <!-- ============ JOBS SCREEN ============ -->
+  <div id="jobsScreen">
+    <div class="metrics" id="metrics">
+      <div class="metric"><div class="metric-label">Open jobs</div><div class="metric-val" id="mOpen">—</div></div>
+      <div class="metric"><div class="metric-label">Urgent</div><div class="metric-val red" id="mUrgent">—</div></div>
+      <div class="metric"><div class="metric-label">Awaiting action</div><div class="metric-val amber" id="mAwaiting">—</div></div>
+      <div class="metric"><div class="metric-label">Complete</div><div class="metric-val green" id="mComplete">—</div></div>
+    </div>
+
+    <div class="filters">
+      <span class="filter-label">Filter:</span>
+      <select id="filterStatus" onchange="renderJobs()">
+        <option value="">All statuses</option>
+        <option>Logged</option><option>Sent to Vendor</option><option>Acknowledged</option>
+        <option>In Progress</option><option>Awaiting Review</option><option>Complete</option><option>Cancelled</option>
+      </select>
+      <select id="filterUrgency" onchange="renderJobs()">
+        <option value="">All urgency</option>
+        <option>Urgent</option><option>Soon</option><option>Routine</option>
+      </select>
+      <select id="filterCat" onchange="renderJobs()">
+        <option value="">All categories</option>
+      </select>
+    </div>
+
+    <div class="jobs-list" id="jobsList"><div class="loading">Loading jobs...</div></div>
   </div>
 
-  <div class="filters">
-    <span class="filter-label">Filter:</span>
-    <select id="filterStatus" onchange="renderJobs()">
-      <option value="">All statuses</option>
-      <option>Logged</option><option>Sent to Vendor</option><option>Acknowledged</option>
-      <option>In Progress</option><option>Awaiting Review</option><option>Complete</option><option>Cancelled</option>
-    </select>
-    <select id="filterUrgency" onchange="renderJobs()">
-      <option value="">All urgency</option>
-      <option>Urgent</option><option>Soon</option><option>Routine</option>
-    </select>
-    <select id="filterCat" onchange="renderJobs()">
-      <option value="">All categories</option>
-    </select>
-  </div>
+  <!-- ============ SETTINGS SCREEN ============ -->
+  <div id="settingsScreen" style="display:none;">
+    <div class="settings-bar">
+      <button class="refresh-btn" onclick="showJobs()">
+        <svg class="refresh-icon" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to jobs
+      </button>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="save-status" id="saveStatus"></span>
+        <button class="save-btn" onclick="saveSettings()">Save changes</button>
+      </div>
+    </div>
 
-  <div class="jobs-list" id="jobsList"><div class="loading">Loading jobs...</div></div>
+    <div class="settings-card">
+      <div class="settings-title">Sites</div>
+      <div class="hint">The locations staff choose from on the form. Remove one with the &times; button.</div>
+      <div id="sitesList"></div>
+      <div class="add-row">
+        <input type="text" id="newSite" placeholder="Add a site, e.g. EmpireTavern" onkeydown="if(event.key==='Enter'){addSite();}" />
+        <button class="act-btn" onclick="addSite()">Add site</button>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-title">Vendors</div>
+      <div class="hint">Each vendor belongs to a category and a site. Set the site to <strong>All sites</strong> if they cover every location. To create a new category, just type its name in the Category box.</div>
+      <div class="vrow-head"><div>Site</div><div>Category</div><div>Vendor</div><div>Email</div><div></div></div>
+      <div id="vendorsList"></div>
+      <button class="add-vendor-btn" onclick="addVendor()">+ Add vendor</button>
+    </div>
+
+    <div class="settings-bar" style="margin-top:0;">
+      <span class="save-status" id="saveStatus2"></span>
+      <button class="save-btn" onclick="saveSettings()">Save changes</button>
+    </div>
+
+    <datalist id="fh-catlist"></datalist>
+  </div>
 </div>
 
 <script>
@@ -334,6 +407,179 @@ function cancelJob(ref){
 }
 
 document.getElementById("refreshBtn").onclick=function(){if(sessionStorage.getItem("fh_auth")==="1")loadJobs();};
+
+
+/* ========================================================================
+   SETTINGS SCREEN — manage Sites and Vendors, saved back to the Sheet.
+   ======================================================================== */
+
+var editSites=[];
+var editVendors=[];
+
+function escHtml(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function escAttr(s){return escHtml(s).replace(/"/g,"&quot;");}
+
+function showSettings(){
+  document.getElementById("jobsScreen").style.display="none";
+  document.getElementById("settingsScreen").style.display="block";
+  setSaveStatus("");
+  loadConfigForEdit();
+}
+function showJobs(){
+  document.getElementById("settingsScreen").style.display="none";
+  document.getElementById("jobsScreen").style.display="block";
+}
+
+function loadConfigForEdit(){
+  document.getElementById("sitesList").innerHTML='<div class="loading">Loading…</div>';
+  document.getElementById("vendorsList").innerHTML="";
+  fetch(SHEETS_URL+"?action=getConfig&t="+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(d){
+      editSites=((d&&d.sites)||[]).slice();
+      editVendors=((d&&d.vendors)||[]).map(function(v){
+        return {site:v.site||"All sites",category:v.category||"",name:v.name||"",email:v.email||""};
+      });
+      renderSites();
+      renderVendors();
+    })
+    .catch(function(){
+      document.getElementById("sitesList").innerHTML='<div class="empty">Couldn’t load settings — check your connection and try again.</div>';
+    });
+}
+
+function renderSites(){
+  var el=document.getElementById("sitesList");
+  if(!editSites.length){el.innerHTML='<div class="hint" style="margin:0;">No sites yet — add one below.</div>';return;}
+  el.innerHTML=editSites.map(function(s,i){
+    return '<div class="srow-edit"><span>'+escHtml(s)+'</span>'
+      +'<button class="del" title="Remove site" onclick="removeSite('+i+')">&times;</button></div>';
+  }).join("");
+}
+
+function renderVendors(){
+  // Refresh the category suggestions list from whatever categories are in use.
+  var cats=[...new Set(editVendors.map(function(v){return v.category;}))].filter(Boolean).sort();
+  document.getElementById("fh-catlist").innerHTML=cats.map(function(c){return '<option value="'+escAttr(c)+'">';}).join("");
+
+  var siteOpts=["All sites"].concat(editSites);
+  var el=document.getElementById("vendorsList");
+  if(!editVendors.length){el.innerHTML='<div class="hint" style="margin:0;">No vendors yet — add one below.</div>';return;}
+
+  el.innerHTML=editVendors.map(function(v,i){
+    var opts=siteOpts.slice();
+    // If this vendor's site was deleted from the Sites list, keep showing it so it isn't lost.
+    if(v.site && opts.indexOf(v.site)<0) opts.unshift(v.site);
+    var optHtml=opts.map(function(s){return '<option'+(s===v.site?' selected':'')+'>'+escHtml(s)+'</option>';}).join("");
+    return '<div class="vrow">'
+      +'<select onchange="setVendor('+i+',\'site\',this.value)">'+optHtml+'</select>'
+      +'<input list="fh-catlist" value="'+escAttr(v.category)+'" placeholder="Category" onchange="setVendor('+i+',\'category\',this.value)">'
+      +'<input value="'+escAttr(v.name)+'" placeholder="Vendor name" onchange="setVendor('+i+',\'name\',this.value)">'
+      +'<input value="'+escAttr(v.email)+'" placeholder="name@email.co.nz" onchange="setVendor('+i+',\'email\',this.value)">'
+      +'<button class="del" title="Remove vendor" onclick="removeVendor('+i+')">&times;</button>'
+      +'</div>';
+  }).join("");
+}
+
+function setVendor(i,field,val){ if(editVendors[i]) editVendors[i][field]=val; }
+
+function addSite(){
+  var inp=document.getElementById("newSite");
+  var val=inp.value.trim();
+  if(!val)return;
+  var exists=editSites.some(function(s){return s.toLowerCase()===val.toLowerCase();});
+  if(exists){ inp.value=""; return; }
+  editSites.push(val);
+  inp.value="";
+  renderSites();
+  renderVendors();
+  inp.focus();
+}
+
+function removeSite(i){
+  editSites.splice(i,1);
+  renderSites();
+  renderVendors();
+}
+
+function addVendor(){
+  editVendors.push({site:"All sites",category:"",name:"",email:""});
+  renderVendors();
+  // Focus the new row's category box.
+  var rows=document.getElementById("vendorsList").getElementsByClassName("vrow");
+  if(rows.length){ var inputs=rows[rows.length-1].getElementsByTagName("input"); if(inputs.length) inputs[0].focus(); }
+}
+
+function removeVendor(i){
+  editVendors.splice(i,1);
+  renderVendors();
+}
+
+function setSaveStatus(msg,kind){
+  ["saveStatus","saveStatus2"].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){ el.textContent=msg||""; el.className="save-status"+(kind?" "+kind:""); }
+  });
+}
+
+// Build a comparable fingerprint of a sites+vendors set, so we can confirm the
+// save really landed by reading it back.
+function configSignature(sites,vendors){
+  var s=sites.map(function(x){return String(x).trim();}).filter(Boolean).join("§");
+  var v=vendors
+    .map(function(x){return [String(x.site||"All sites").trim(),String(x.category||"").trim(),String(x.name||"").trim(),String(x.email||"").trim()];})
+    .filter(function(r){return r[2]!=="";})
+    .map(function(r){return r.join("|");}).join("~");
+  return s+" ‖ "+v;
+}
+
+function saveSettings(){
+  // Make sure a field being edited right now is committed before we read state.
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  window.scrollTo({top:0,behavior:"smooth"});
+
+  // Clean the data.
+  var seenS={};
+  var sites=editSites.map(function(s){return String(s).trim();}).filter(function(s){
+    if(!s)return false; var k=s.toLowerCase(); if(seenS[k])return false; seenS[k]=true; return true;
+  });
+  var vendors=editVendors.map(function(v){
+    return {site:String(v.site||"All sites").trim(),category:String(v.category||"").trim(),name:String(v.name||"").trim(),email:String(v.email||"").trim()};
+  }).filter(function(v){return v.name!=="";});
+
+  // Gentle warning if any vendor is missing a category or email (still allowed).
+  var incomplete=vendors.filter(function(v){return !v.category||!v.email;}).length;
+  if(incomplete>0){
+    if(!confirm(incomplete+" vendor(s) are missing a category or email. Save anyway?")) { setSaveStatus(""); return; }
+  }
+
+  setSaveStatus("Saving…","saving");
+
+  try{
+    fetch(SHEETS_URL,{method:"POST",mode:"no-cors",body:JSON.stringify({action:"saveConfig",sites:sites,vendors:vendors})}).catch(function(){});
+  }catch(e){}
+
+  var want=configSignature(sites,vendors);
+  var delays=[2500,4000,6000,9000];
+  var idx=0;
+  (function check(){
+    if(idx>=delays.length){
+      setSaveStatus("Couldn’t confirm the save — please press Save changes again.","err");
+      return;
+    }
+    setTimeout(function(){
+      fetch(SHEETS_URL+"?action=getConfig&t="+Date.now())
+        .then(function(r){return r.json();})
+        .then(function(d){
+          var got=configSignature((d&&d.sites)||[],(d&&d.vendors)||[]);
+          if(got===want){
+            setSaveStatus("Saved ✓ — the form will show these next time it’s opened.","ok");
+          } else { idx++; check(); }
+        })
+        .catch(function(){ idx++; check(); });
+    },delays[idx]);
+  })();
+}
 
 
 var PASS="DBadmin2026";
