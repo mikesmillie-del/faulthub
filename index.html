@@ -533,18 +533,31 @@ document.getElementById("newBtn").onclick=function(){
   document.getElementById("jobDate").value=todayNZ();
 };
 
-var PASS="DBadmin2026";
 function checkLogin(){
   var val=document.getElementById("loginPass").value;
-  if(val===PASS){
-    document.getElementById("loginScreen").style.display="none";
-    sessionStorage.setItem("fh_auth","1");
-  } else {
-    document.getElementById("loginErr").style.display="block";
-    document.getElementById("loginPass").value="";
-  }
+  var btn=document.querySelector(".login-btn");
+  var err=document.getElementById("loginErr");
+  err.style.display="none";
+  if(btn){btn.disabled=true;btn.textContent="Checking…";}
+  fetch(SHEETS_URL+"?action=checkPass&role=staff&pass="+encodeURIComponent(val)+"&t="+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d&&d.ok){
+        document.getElementById("loginScreen").style.display="none";
+        sessionStorage.setItem("fh_staff","1");
+      } else {
+        err.textContent="Incorrect password. Please try again.";
+        err.style.display="block";
+        document.getElementById("loginPass").value="";
+      }
+    })
+    .catch(function(){
+      err.textContent="Couldn’t reach the server — check your connection and try again.";
+      err.style.display="block";
+    })
+    .then(function(){ if(btn){btn.disabled=false;btn.textContent="Sign in";} });
 }
-if(sessionStorage.getItem("fh_auth")!=="1"){
+if(sessionStorage.getItem("fh_staff")!=="1"){
   document.getElementById("loginScreen").style.display="flex";
 } else {
   document.getElementById("loginScreen").style.display="none";

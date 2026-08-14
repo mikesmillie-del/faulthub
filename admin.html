@@ -203,6 +203,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
 
     <div class="settings-card">
+      <div class="settings-title">Passwords</div>
+      <div class="hint">Two separate passwords: staff use one to open the <strong>form</strong>, and you use the other to open this <strong>dashboard</strong>. Leave a box blank to keep the current password. Use <strong>different</strong> words for each, so staff can't reach the dashboard. (Shown as you type so you can double-check them.)</div>
+      <div class="company-grid">
+        <div class="cfield full"><label>New staff password — opens the form</label><input type="text" id="pwStaff" placeholder="Leave blank to keep current" autocomplete="off"></div>
+        <div class="cfield full"><label>New admin password — opens this dashboard</label><input type="text" id="pwAdmin" placeholder="Leave blank to keep current" autocomplete="off"></div>
+      </div>
+    </div>
+
+    <div class="settings-card">
       <div class="settings-title">Sites</div>
       <div class="hint">The locations staff choose from on the form. Remove one with the &times; button.</div>
       <div id="sitesList"></div>
@@ -441,7 +450,7 @@ function cancelJob(ref){
   }
 }
 
-document.getElementById("refreshBtn").onclick=function(){if(sessionStorage.getItem("fh_auth")==="1")loadJobs();};
+document.getElementById("refreshBtn").onclick=function(){if(sessionStorage.getItem("fh_admin")==="1")loadJobs();};
 
 
 /* ========================================================================
@@ -591,7 +600,9 @@ function saveSettings(){
   var branding={
     name:document.getElementById("coName").value.trim(),
     colour:(document.getElementById("coColour").value||"#185FA5").trim(),
-    adminEmail:document.getElementById("coEmail").value.trim()
+    adminEmail:document.getElementById("coEmail").value.trim(),
+    newStaffPass:document.getElementById("pwStaff").value.trim(),
+    newAdminPass:document.getElementById("pwAdmin").value.trim()
   };
 
   // Gentle warning if any vendor is missing a category or email (still allowed).
@@ -621,7 +632,10 @@ function saveSettings(){
           var got=configSignature((d&&d.sites)||[],(d&&d.vendors)||[],(d&&d.branding)||{});
           if(got===want){
             applyBrandingDash(branding);
-            setSaveStatus("Saved ✓ — the form will show these next time it’s opened.","ok");
+            var pwChanged=(branding.newStaffPass||branding.newAdminPass);
+            document.getElementById("pwStaff").value="";
+            document.getElementById("pwAdmin").value="";
+            setSaveStatus("Saved ✓ — the form will show these next time it’s opened."+(pwChanged?" Passwords updated.":""),"ok");
           } else { idx++; check(); }
         })
         .catch(function(){ idx++; check(); });
@@ -630,19 +644,32 @@ function saveSettings(){
 }
 
 
-var PASS="DBadmin2026";
 function checkLogin(){
   var val=document.getElementById("loginPass").value;
-  if(val===PASS){
-    document.getElementById("loginScreen").style.display="none";
-    sessionStorage.setItem("fh_auth","1");
-    loadJobs();
-  } else {
-    document.getElementById("loginErr").style.display="block";
-    document.getElementById("loginPass").value="";
-  }
+  var btn=document.querySelector(".login-btn");
+  var err=document.getElementById("loginErr");
+  err.style.display="none";
+  if(btn){btn.disabled=true;btn.textContent="Checking…";}
+  fetch(SHEETS_URL+"?action=checkPass&role=admin&pass="+encodeURIComponent(val)+"&t="+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d&&d.ok){
+        document.getElementById("loginScreen").style.display="none";
+        sessionStorage.setItem("fh_admin","1");
+        loadJobs();
+      } else {
+        err.textContent="Incorrect password. Please try again.";
+        err.style.display="block";
+        document.getElementById("loginPass").value="";
+      }
+    })
+    .catch(function(){
+      err.textContent="Couldn’t reach the server — check your connection and try again.";
+      err.style.display="block";
+    })
+    .then(function(){ if(btn){btn.disabled=false;btn.textContent="Sign in";} });
 }
-if(sessionStorage.getItem("fh_auth")!=="1"){
+if(sessionStorage.getItem("fh_admin")!=="1"){
   document.getElementById("loginScreen").style.display="flex";
 } else {
   document.getElementById("loginScreen").style.display="none";
