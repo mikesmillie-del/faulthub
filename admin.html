@@ -162,6 +162,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
     <div class="filters">
       <span class="filter-label">Filter:</span>
+      <select id="filterSite" onchange="renderJobs()">
+        <option value="">All sites</option>
+      </select>
       <select id="filterStatus" onchange="renderJobs()">
         <option value="">All statuses</option>
         <option>Logged</option><option>Sent to Vendor</option><option>Acknowledged</option>
@@ -303,6 +306,7 @@ function loadJobs(){
     if(data.jobs){
       jobs=data.jobs.reverse();
       populateCatFilter();
+      populateSiteFilter();
       renderJobs();
     } else {
       document.getElementById("jobsList").innerHTML='<div class="empty">No jobs found in the sheet yet.</div>';
@@ -320,6 +324,15 @@ function populateCatFilter(){
   sel.innerHTML='<option value="">All categories</option>';
   var cats=[...new Set(jobs.map(function(j){return j.category;}))].filter(Boolean).sort();
   cats.forEach(function(c){var o=document.createElement("option");o.value=c;o.textContent=c;sel.appendChild(o);});
+  sel.value=current;
+}
+
+function populateSiteFilter(){
+  var sel=document.getElementById("filterSite");
+  var current=sel.value;
+  sel.innerHTML='<option value="">All sites</option>';
+  var sites=[...new Set(jobs.map(function(j){return j.site;}))].filter(Boolean).sort();
+  sites.forEach(function(s){var o=document.createElement("option");o.value=s;o.textContent=s;sel.appendChild(o);});
   sel.value=current;
 }
 
@@ -349,8 +362,10 @@ function renderJobs(){
   var fs=document.getElementById("filterStatus").value;
   var fu=document.getElementById("filterUrgency").value;
   var fc=document.getElementById("filterCat").value;
+  var fsite=document.getElementById("filterSite").value;
   updateMetrics(jobs);
   var filtered=jobs.filter(function(j){
+    if(fsite&&j.site!==fsite)return false;
     if(fs&&getStatus(j)!==fs)return false;
     if(fu&&j.urgency!==fu)return false;
     if(fc&&j.category!==fc)return false;
